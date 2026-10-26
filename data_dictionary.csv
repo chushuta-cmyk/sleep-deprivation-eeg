@@ -1,0 +1,30 @@
+﻿variable_name,description,data_type,source_file,notes
+participant_id,Unique participant identifier,string,participants.tsv,Format: sub-XX (01-71)
+age,Participant age in years,integer,participants.tsv,
+sex,Participant sex,string,participants.tsv,M/F
+handedness,Participant handedness,string,participants.tsv,L/R
+session,Session identifier,string,BIDS structure,NS (normal sleep) or SD (sleep deprivation)
+session_order,Order of sessions,string,metadata,Counterbalanced across participants
+task,Task name,string,BIDS filename,eyesopen or eyesclosed
+condition,Experimental condition,string,metadata,NS or SD
+eeg_file,EEG data filename,string,BIDS structure,.set or .fdt format
+pvt_lapses,Number of PVT lapses (RT > 500ms),integer,behavioral,Higher = worse
+pvt_mean_rt,Mean PVT reaction time (ms),float,behavioral,Lower = better
+pvt_reciprocal_rt,Reciprocal of mean RT (1/RT),float,derived,Higher = better
+ss Sleepiness,Subjective sleepiness score,integer,behavioral,Stanford Sleepiness Scale or similar
+panas_positive,PANAS positive affect score,integer,behavioral,Higher = more positive affect
+panas_negative,PANAS negative affect score,integer,behavioral,Higher = more negative affect
+state_anxiety,State anxiety score,integer,behavioral,Higher = more anxious
+sleep_duration,Self-reported sleep duration (hours),float,sleep_diary,
+sleep_quality,Self-reported sleep quality,integer,sleep_diary,
+time_of_day,Time of testing,string,metadata,Morning/Afternoon/Evening
+eeg_duration_total,Total EEG recording duration (seconds),float,derived,
+eeg_duration_clean,Clean EEG duration after QC (seconds),float,derived,
+eeg_epochs_retained,Number of retained epochs,integer,derived,
+eeg_epochs_rejected,Number of rejected epochs,integer,derived,
+eeg_bad_channels,Number of bad channels detected,integer,derived,
+eeg_ica_components_removed,Number of ICA components removed,integer,derived,
+eeg_line_noise,Line noise indicator,boolean,derived,True if 50/60Hz contamination detected
+eeg_sampling_rate,Sampling rate (Hz),integer,metadata,500 Hz original
+eeg_reference,EEG reference scheme,string,metadata,Average or other
+eeg_montage,EEG electrode montage,string,metadata,61 electrodes Brain Products

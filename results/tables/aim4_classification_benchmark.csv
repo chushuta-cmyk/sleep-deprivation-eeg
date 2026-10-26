@@ -1,0 +1,6 @@
+model,cv_scheme,auc_roc,subject_pair_auc_mean,accuracy,f1_score,sensitivity,specificity
+Logistic Regression (L2),"LOSO (32 subjects, 64 sessions)",0.8623046875,0.78125,0.78125,0.78125,0.78125,0.78125
+Linear SVM,"LOSO (32 subjects, 64 sessions)",0.8349609375,0.78125,0.78125,0.78125,0.78125,0.78125
+RBF SVM,"LOSO (32 subjects, 64 sessions)",0.7685546875,0.71875,0.71875,0.71875,0.71875,0.71875
+Random Forest,"LOSO (32 subjects, 64 sessions)",0.8115234375,0.6875,0.6875,0.6875,0.6875,0.6875
+Gradient Boosting,"LOSO (32 subjects, 64 sessions)",0.7392578125,0.65625,0.671875,0.676923076923077,0.6875,0.65625

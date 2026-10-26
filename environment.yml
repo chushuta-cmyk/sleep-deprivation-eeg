@@ -1,0 +1,22 @@
+name: sleep_eeg
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - numpy
+  - scipy
+  - pandas
+  - matplotlib
+  - seaborn
+  - scikit-learn
+  - mne
+  - mne-bids
+  - specparam
+  - statsmodels
+  - jupyter
+  - ipykernel
+  - pip
+  - pip:
+    - openneuro-py
+    - pyriemann

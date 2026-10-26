@@ -1,0 +1,95 @@
+# 分析配置文件
+# 所有脚本应从此文件读取参数
+
+preprocessing:
+  # 滤波参数
+  l_freq_analysis: 0.5      # 分析数据高通
+  h_freq_analysis: 40.0     # 分析数据低通
+  l_freq_ica: 1.0           # ICA 拟合用高通
+  notch_freq: 50.0          # 线噪声频率
+  notch_widths: 2.0         # 陷波宽度
+  
+  # 重采样
+  resample_hz: 250          # 重采样频率
+  
+  # Epoch 参数
+  epoch_length_sec: 2.0     # epoch 长度
+  epoch_overlap: 0.0        # epoch 重叠
+  
+  # 坏道检测
+  max_bad_channel_fraction: 0.10  # 最大坏道比例
+  bad_channel_std_threshold: 5.0  # 标准差阈值
+  bad_channel_corr_threshold: 0.3  # 相关性阈值
+  
+  # Epoch rejection
+  reject_eeg_uv: 150        # 峰峰值阈值 (µV)，配合ICA眨眼剔除后标准阈值
+  flat_eeg_uv: 0.5          # 平坦阈值 (µV)
+  robust_z_threshold: 5.0   # robust z-score 阈值
+  
+  # ICA
+  ica_method: "fastica"     # ICA 方法
+  ica_n_components: 20      # 固定成分数，避免单通道异常导致方差阈值崩溃
+  
+  # 最小清洁数据
+  min_clean_duration_sec: 30  # 最小清洁时长
+
+analysis:
+  # 频带定义
+  freq_bands:
+    delta: [0.5, 4.0]
+    theta: [4.0, 8.0]
+    alpha: [8.0, 13.0]
+    beta: [13.0, 30.0]
+    # gamma 仅作为 exploratory
+  
+  # ROI 定义（10-20 系统，修正 Fp1/Fp2 大小写匹配 EEGLAB montage）
+  roi:
+    posterior: ["O1", "O2", "PO3", "PO4", "POz", "Oz"]
+    frontal: ["F1", "F2", "F3", "F4", "Fz", "Fp1", "Fp2", "AF3", "AF4", "Fpz"]
+    central: ["C1", "C2", "C3", "C4", "Cz", "CPz"]
+    temporal: ["T7", "T8", "TP7", "TP8", "TP9", "TP10"]
+  
+  # 主分析特征
+  primary_features:
+    - posterior_alpha_logpower
+    - frontal_theta_logpower
+    - global_delta_logpower
+    - global_spectral_exponent
+    - posterior_alpha_peak_frequency
+  
+  # 次要/exploratory 特征
+  secondary_features:
+    - global_theta_logpower
+    - global_alpha_logpower
+    - global_beta_logpower
+    - central_theta_logpower
+    - occipital_alpha_logpower
+
+statistics:
+  # 多重比较校正
+  alpha_level: 0.05
+  fdr_method: "fdr_bh"
+  
+  # 效应量
+  effect_size_method: "cohens_dz"
+  
+  # 置换检验
+  n_permutations: 5000
+  
+  # Bootstrap
+  n_bootstrap: 2000
+  
+  # 交叉验证
+  outer_cv_splits: 5
+  outer_cv_repeats: 20
+  inner_cv_splits: 4
+
+paths:
+  raw_data: "data/raw"
+  derivatives: "data/derivatives"
+  features: "data/derivatives/features"
+  results: "results"
+  figures: "results/figures"
+  tables: "results/tables"
+  models: "results/models"
+  logs: "results/logs"
