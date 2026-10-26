@@ -5,22 +5,22 @@
 [![Validation](https://img.shields.io/badge/Validation-LOSO%20%26%20Nested--CV-success.svg)]()
 
 A reproducible, leakage-free neurophysiological analysis and machine learning benchmarking repository investigating:
-1. **Study 1 (Completed & Included in `results/` & `manuscript/`)**: *Dissociable Trait and State Signatures of Acute Sleep Deprivation in Resting-State EEG: Parameterized Spectral Dynamics, Individual Vulnerability, and Machine Learning Benchmarking* (OpenNeuro `ds004902`).
+1. **Study 1 (Completed & Included in `results/`)**: *Dissociable Trait and State Signatures of Acute Sleep Deprivation in Resting-State EEG: Parameterized Spectral Dynamics, Individual Vulnerability, and Machine Learning Benchmarking* across the full OpenNeuro `ds004902` cohort ($N = 71$ paired participants, $142$ sessions).
 2. **Core Methodological Library (`src/harmonization_and_normative.py`)**: The **"A+B" Cross-Dataset Harmonization, MST+Proportional Topological Graph Construction, and Within-Site Normative $Z$-Score Calibration Framework** designed for multi-cohort psychiatric EEG benchmarking (MDD, Schizophrenia, Bipolar Disorder, ADHD).
 
 ---
 
-## 🌟 Key Empirical Results (`N = 32` Paired Subjects, `64` Sessions, 100% QC Retention)
+## 🌟 Key Empirical Results (`N = 71` Paired Subjects, `142` Sessions, 100% QC Retention)
 
 | Analysis Module | Key Finding | Metric / Statistical Evidence |
 | :--- | :--- | :--- |
-| **Phase 2: Automated QC** | 100% paired retention via multi-evidence spherical spline interpolation (`reset_bads=True`) & FastICA ocular artifact removal | **64 / 64 sessions retained** (mean clean duration: **267.3 s**) |
-| **Aim 1: Cortical State Reactivity** | All three primary spectral hypotheses passed Benjamini–Hochberg FDR correction ($q < 0.05$) | • Global Delta $\uparrow$: **$d_z = +0.653$** ($p = 0.00085, q = 0.0043$)<br>• Frontal Theta $\uparrow$: **$d_z = +0.557$** ($p = 0.0036, q = 0.0089$)<br>• Posterior Alpha $\uparrow$: **$d_z = +0.426$** ($p = 0.0221, q = 0.0369$) |
-| **Aim 2: Trait vs. State Dissociation** | Alpha & $1/f$ aperiodic slope act as stable individual neural fingerprints; Delta & Theta are state-reactive markers | • Global Alpha $\text{ICC}(A,1) = \mathbf{0.877}$ ($p < 10^{-10}$)<br>• Periodic Posterior Alpha $\text{ICC}(A,1) = \mathbf{0.816}$<br>• Aperiodic $1/f$ Slope $\text{ICC}(A,1) = \mathbf{0.717}$<br>• Delta / Theta $\text{ICC}(A,1) = 0.295 \sim 0.333$ |
-| **Aim 4A: LOSO State Decoding** | Subject-independent classification of Normal Sleep (NS) vs. Sleep Deprivation (SD) | • **19-ch Dual-Stream (CAR+CSD) + Normative $Z$-score**: **$\text{AUC} = \mathbf{0.873}$** ($\text{Acc} = 81.2\%$)<br>• **61-ch Full Montage (L2 Logistic)**: **$\text{AUC} = \mathbf{0.862}$** ($\text{Acc} = 78.1\%$) |
-| **Aim 4B: Vulnerability Prediction** | Out-of-fold prediction of subjective sleepiness amplification ($\Delta\text{KSS}$) under Nested-CV | • **Linear SVR**: **$r = \mathbf{0.482}$** ($p = 0.0052, R^2 = 0.231, \text{MAE} = 1.29$)<br>• **Ridge Regression**: **$r = \mathbf{0.474}$** ($p = 0.0061, R^2 = 0.224$) |
-| **Aim 5: Incremental Validity (H4)** | Excising the $1/f$ background reveals pure periodic posterior alpha shift as a potent predictor of sleepiness vulnerability beyond baseline sleepiness & PSQI | • $\beta = \mathbf{0.384}$ ($p = 0.0125$)<br>• Explains **$\Delta R^2 = \mathbf{+15.8\%}$** ($F = 6.89, p = 0.0143$), lifting model $R^2$ from $24.5\%$ to **$40.3\%$** |
-| **Phase 9: Graph Topology Validation** | Empirical refutation of static `PLI > 0.30` thresholding vs. MST + Top-20% proportional sparsity | • Static `PLI > 0.30`: **98.4% sessions have isolated nodes** (density $0.00 \sim 0.41$)<br>• **MST + Top-20%**: **0.0% isolated nodes** (invariant density $0.20 \pm 0.006$) |
+| **Phase 2: Automated QC** | 100% paired retention via binary stream recovery, multi-evidence spherical spline interpolation (`reset_bads=True`) & FastICA EOG removal | **142 / 142 sessions retained** (mean clean duration: **270.3 s**, median: **290.0 s**) |
+| **Aim 1: Cortical State Reactivity ($N=71$)** | Four of five primary spectral hypotheses passed Benjamini–Hochberg FDR correction ($q < 0.05$) in covariate-adjusted LMMs | • Frontal Theta $\uparrow$: **$d_z = +0.788$** ($p = 5.70 \times 10^{-9}, q = 2.85 \times 10^{-8}$)<br>• Global Delta $\uparrow$: **$d_z = +0.523$** ($p = 3.67 \times 10^{-5}, q = 9.19 \times 10^{-5}$)<br>• Posterior Alpha $\uparrow$: **$d_z = +0.345$** ($p = 0.0049, q = 0.0082$)<br>• Aperiodic $1/f$ Slope $\downarrow$: LMM $\beta = -0.066$ ($p = 0.0350, q = 0.0448$) |
+| **Aim 2: Trait vs. State Dissociation ($N=71$)** | Alpha/Beta & $1/f$ aperiodic slope act as stable individual neural fingerprints; Delta & raw Theta are state-reactive markers | • Global Alpha $\text{ICC}(A,1) = \mathbf{0.816}$ ($p = 1.15 \times 10^{-19}$)<br>• Global Beta $\text{ICC}(A,1) = \mathbf{0.744}$ ($p = 6.48 \times 10^{-15}$)<br>• Periodic Posterior Alpha $\text{ICC}(A,1) = \mathbf{0.702}$ ($p = 5.02 \times 10^{-12}$)<br>• Aperiodic $1/f$ Slope $\text{ICC}(A,1) = \mathbf{0.658}$ ($p = 3.21 \times 10^{-10}$)<br>• Global Delta $\text{ICC}(A,1) = 0.239$ (state-reactive) |
+| **Aim 4A: LOSO State Decoding ($142$ Sessions)** | Subject-independent classification of Normal Sleep (NS) vs. Sleep Deprivation (SD) across 71 unseen participants | • **61-ch Linear SVM**: **$\text{AUC} = \mathbf{0.881}$** ($\text{Acc} = 83.1\%$)<br>• **61-ch RBF SVM**: **$\text{Acc} = \mathbf{86.6\%}$** ($\text{Pair-AUC} = 0.873$)<br>• **19-ch Dual-Stream (CAR+CSD) + Normative $Z$-score**: **$\text{AUC} = \mathbf{0.875}$** ($\text{Acc} = 81.7\%$) |
+| **Aim 4B: Vulnerability Prediction (Nested-CV)** | Out-of-fold prediction of subjective sleepiness ($\Delta Z_{\text{Sleepiness}}, \Delta\text{KSS}$) and objective vigilance ($\Delta\text{PVT RT SD}$) | • **Full-Cohort $\Delta Z_{\text{Sleepiness}}$ ($N=66$, Ridge)**: **$r = \mathbf{0.629}$** ($p = 1.58 \times 10^{-8}, R^2 = 0.395$)<br>• **Sub-cohort $\Delta\text{KSS}$ ($N=33$, Linear SVR)**: **$r = \mathbf{0.629}$** ($p = 8.87 \times 10^{-5}, R^2 = 0.391$)<br>• **Objective $\Delta\text{PVT RT SD}$ ($N=26$, Ridge)**: **$r = \mathbf{0.750}$** ($p = 1.03 \times 10^{-5}, R^2 = 0.551$) |
+| **Aim 5: Incremental Validity (H4)** | Excising the $1/f$ background reveals pure periodic posterior alpha shift as a significant predictor of sleepiness vulnerability beyond baseline & PSQI | • **Full-Cohort $\Delta Z_{\text{Sleepiness}}$ ($N=63$)**: $\beta = 0.220$ ($p = 0.0189$), **$\Delta R^2 = +4.5\%$** ($p = 0.0288$)<br>• **KSS Cohort $\Delta\text{KSS}$ ($N=31\text{–}32$)**: $\beta = 0.369$ ($p = 0.0142$), **$\Delta R^2 = +14.4\text{–}15.8\%$** ($p \le 0.0182$) |
+| **Phase 9: Graph Topology Validation ($142$ Sessions)** | Empirical refutation of static `PLI > 0.30` thresholding vs. MST + Top-20% proportional sparsity | • Static `PLI > 0.30`: **99.3% sessions ($141/142$) have isolated nodes** (density $0.00 \sim 0.41$)<br>• **MST + Top-20%**: **0.0% isolated nodes ($0/142$)** (invariant density $0.20 \pm 0.007$) |
 
 ---
 
@@ -51,12 +51,8 @@ sleep_deprivation_eeg_github_repo/
 │   └── run_all.py                             # One-click end-to-end execution script
 ├── notebooks/
 │   └── Colab_Benchmark_Runner.ipynb           # Ready-to-run Google Colab notebook
-├── manuscript/
-│   ├── outline.md                             # Structured Abstract & paper section outline
-│   ├── methods.md                             # Complete publication-ready Methods text
-│   └── results.md                             # Consolidated Results narrative & three-line tables
 ├── results/
-│   ├── analysis_summary_report.txt            # Full statistical output log
+│   ├── analysis_summary_report.txt            # Full statistical output log (N=71, 142 sessions)
 │   ├── tables/                                # All CSV/JSON statistical & ML benchmark tables
 │   └── figures/                               # High-resolution publication figures (200 DPI PNG)
 └── tests/
@@ -72,10 +68,9 @@ sleep_deprivation_eeg_github_repo/
 python tests/test_harmonization_normative.py
 ```
 
-### 2. Download / Resume Missing Subjects from OpenNeuro `ds004902`
+### 2. Download / Resume Subjects from OpenNeuro `ds004902`
 ```bash
-# Incrementally download missing subjects (e.g., sub-01 to sub-39) without overwriting existing data
-python scripts/01_download_data.py --start-sub 1 --end-sub 71
+python scripts/01_download_data.py --start-sub 1 --end-sub 71 --workers 8
 ```
 
 ### 3. Run the Full End-to-End Analysis & Benchmark Pipeline
