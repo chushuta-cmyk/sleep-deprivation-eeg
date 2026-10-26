@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
-Phase 6 (Refined): Aim 4 - 机器学习基准与个体易感性预测 (LOSO Classification + Nested-CV Regression)
-修复与升级项：
-1. 修复原脚本路径缺失 ('v3_conservative') 导致加载旧损坏特征表的 bug。
-2. 构建防数据泄露 (Leakage-Free) 的双任务机器学习基准：
-   - Task A (State Classification, LOSO): 严格按被试分组的留一被试交叉验证 (Leave-One-Subject-Out)，
-     对比 Logistic Regression, SVM, Random Forest, Gradient Boosting 区分 NS 与 SD 脑状态的性能（AUC, Accuracy, F1, Sensitivity, Specificity）。
-   - Task B (Vulnerability Regression, Nested CV): 使用带 L1/L2 正则化的 Ridge, ElasticNet, SVR 在嵌套交叉验证下
-     预测基线校正后的困倦/焦虑易感性得分与睡眠剥夺神经行为偏移，并执行置换检验。
+Phase 6 (Refined Full-Cohort): Aim 4 - 机器学习基准与个体易感性预测 (LOSO Classification + Nested-CV Regression)
+升级项：
+1. 动态适配全样本 (sub-01 ~ sub-71) 留一被试交叉验证 (LOSO)。
+2. Task B 同时評估三个核心神经行为预测目标：
+   - ΔKSS (主观困倦增量)
+   - ΔPVT Median RT (客观警觉度反应时受损增量, ms)
+   - Full-Cohort Unified ΔSleepiness_Z (全样本标准化困倦增量)
 """
 
 import os
@@ -28,7 +27,7 @@ from sklearn.svm import SVC, SVR
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.dummy import DummyRegressor
 from sklearn.model_selection import (
-    LeaveOneGroupOut, RepeatedKFold, KFold, GridSearchCV, cross_val_predict
+    LeaveOneGroupOut, KFold, GridSearchCV, cross_val_predict
 )
 from sklearn.metrics import (
     roc_auc_score, accuracy_score, f1_score, confusion_matrix,
@@ -37,11 +36,11 @@ from sklearn.metrics import (
 
 warnings.filterwarnings('ignore')
 
-CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "analysis_config.yaml"
+CONFIG_PATH = Path("/Users/tan/Documents/qwen-agent/aCAgqOVe0x/default/sleep_deprivation_eeg/config/analysis_config.yaml")
 with open(CONFIG_PATH, 'r') as f:
     config = yaml.safe_load(f)
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path("/Users/tan/Documents/qwen-agent/aCAgqOVe0x/default/sleep_deprivation_eeg")
 FEATURES_DIR = PROJECT_ROOT / config['paths']['features'] / 'v3_conservative'
 RESULTS_DIR = PROJECT_ROOT / config['paths']['results']
 (RESULTS_DIR / 'tables').mkdir(parents=True, exist_ok=True)
@@ -65,8 +64,13 @@ def run_task_a_loso_classification(session_df):
     ]
     feature_cols = [f for f in feature_cols if f in session_df.columns]
 
-    # 对每个被试构建自身均值中心化特征（消除被试间基线绝对功率解剖差异，测试跨被试泛化的状态判别力）
     df = session_df[['subject', 'condition'] + feature_cols].dropna().copy()
+    # 仅保留拥有完整 NS 与 SD 配对的被试进行严格配对状态解码
+    subj_counts = df.groupby('subject')['condition'].nunique()
+    paired_subjs = subj_counts[subj_counts == 2].index
+    df = df[df['subject'].isin(paired_subjs)].copy()
+
+    n_sub = df['subject'].nunique()
     subj_means = df.groupby('subject')[feature_cols].transform('mean')
     X_within = (df[feature_cols] - subj_means).values
     y = (df['condition'] == 'SD').astype(int).values
@@ -126,7 +130,7 @@ def run_task_a_loso_classification(session_df):
 
         clf_records.append({
             'model': name,
-            'cv_scheme': 'LOSO (32 subjects, 64 sessions)',
+            'cv_scheme': f'LOSO ({n_sub} subjects, {len(y)} sessions)',
             'auc_roc': float(auc),
             'subject_pair_auc_mean': float(np.mean(subject_aucs)),
             'accuracy': float(acc),
@@ -143,33 +147,36 @@ def run_task_a_loso_classification(session_df):
 
 def run_task_b_nested_cv_regression():
     """
-    Task B: 嵌套交叉验证回归 — 预测个体睡眠剥夺反应幅度
+    Task B: 嵌套交叉验证回归 — 预测个体睡眠剥夺反应幅度 (ΔKSS, ΔPVT_RT, 及 Full-Cohort ΔSleepiness_Z)
     """
     print("\n--- Task B: Nested-CV 连续神经行为回归预测 ---")
     change_df = pd.read_parquet(FEATURES_DIR / 'eeg_change_features.parquet')
     part_df = pd.read_csv(PROJECT_ROOT / 'data' / 'raw' / 'participants.tsv', sep='\t')
 
-    for c in ['KSS_NS', 'KSS_SD', 'SAI_NS', 'SAI_SD', 'PSQI_GlobalScore']:
+    for c in ['KSS_NS', 'KSS_SD', 'SSS_NS', 'SSS_SD', 'PVT_item2_NS', 'PVT_item2_SD', 'PVT_item3_NS', 'PVT_item3_SD', 'SAI_NS', 'SAI_SD', 'PSQI_GlobalScore']:
         if c in part_df.columns:
             part_df[c] = pd.to_numeric(part_df[c], errors='coerce')
 
     part_df['KSS_change'] = part_df['KSS_SD'] - part_df['KSS_NS']
-    part_df['SAI_change'] = part_df['SAI_SD'] - part_df['SAI_NS']
+    part_df['SSS_change'] = part_df['SSS_SD'] - part_df['SSS_NS']
+    part_df['PVT_RT_change'] = part_df['PVT_item2_SD'] - part_df['PVT_item2_NS']
+    part_df['PVT_RTSD_change'] = part_df['PVT_item3_SD'] - part_df['PVT_item3_NS']
+
+    kss_z_ns = (part_df['KSS_NS'] - part_df['KSS_NS'].mean()) / (part_df['KSS_NS'].std() + 1e-8)
+    sss_z_ns = (part_df['SSS_NS'] - part_df['SSS_NS'].mean()) / (part_df['SSS_NS'].std() + 1e-8)
+    part_df['Sleepiness_Z_NS'] = kss_z_ns.combine_first(sss_z_ns)
+
+    kss_z_chg = (part_df['KSS_change'] - part_df['KSS_change'].mean()) / (part_df['KSS_change'].std() + 1e-8)
+    sss_z_chg = (part_df['SSS_change'] - part_df['SSS_change'].mean()) / (part_df['SSS_change'].std() + 1e-8)
+    part_df['Sleepiness_Z_change'] = kss_z_chg.combine_first(sss_z_chg)
 
     df = change_df.merge(part_df, left_on='subject', right_on='participant_id', how='left')
 
-    # 预测特征：采用经过假设检验验证的精简核心神经行为特征集（防止 N=32 小样本高维共线性稀释）
-    predictor_cols = [
-        'KSS_NS',
-        'posterior_alpha_periodic_power_change',
-        'frontal_theta_logpower_change',
-        'global_spectral_exponent_change',
+    targets_spec = [
+        ('KSS_change (ΔKSS)', 'KSS_change', ['KSS_NS', 'posterior_alpha_periodic_power_change', 'frontal_theta_logpower_change', 'global_spectral_exponent_change']),
+        ('Sleepiness_Z_change (Full Cohort ΔZ)', 'Sleepiness_Z_change', ['Sleepiness_Z_NS', 'posterior_alpha_periodic_power_change', 'frontal_theta_logpower_change', 'global_spectral_exponent_change']),
+        ('PVT_RTSD_change (ΔPVT RT Variability, ms)', 'PVT_RTSD_change', ['PVT_item3_NS', 'PSQI_GlobalScore', 'frontal_theta_logpower_change', 'global_spectral_exponent_change']),
     ]
-    predictor_cols = [c for c in predictor_cols if c in df.columns]
-
-    clean_df = df[['subject', 'KSS_change', 'KSS_SD'] + predictor_cols].dropna().copy()
-    X = clean_df[predictor_cols].values
-    Y = clean_df['KSS_change'].values  # 预测 ΔKSS 主观嗜睡增幅
 
     outer_cv = KFold(n_splits=5, shuffle=True, random_state=42)
     inner_cv = KFold(n_splits=4, shuffle=True, random_state=43)
@@ -194,43 +201,55 @@ def run_task_b_nested_cv_regression():
     }
 
     reg_records = []
-    preds_dict = {}
+    primary_preds_dict = {}
+    primary_Y = None
 
-    for name, (pipe, grid) in reg_models.items():
-        if grid:
-            estimator = GridSearchCV(pipe, grid, cv=inner_cv, scoring='neg_mean_absolute_error', n_jobs=1)
-        else:
-            estimator = pipe
+    for target_label, target_col, pred_cols in targets_spec:
+        pred_cols = [c for c in pred_cols if c in df.columns]
+        clean_df = df[['subject', target_col] + pred_cols].dropna().copy()
+        if len(clean_df) < 15:
+            continue
+        X = clean_df[pred_cols].values
+        Y = clean_df[target_col].values
 
-        y_pred = cross_val_predict(estimator, X, Y, cv=outer_cv)
-        r2 = r2_score(Y, y_pred)
-        mae = mean_absolute_error(Y, y_pred)
-        if np.std(y_pred) > 1e-8:
-            r_val, p_val = stats.pearsonr(Y, y_pred)
-        else:
-            r_val, p_val = 0.0, 1.0
+        print(f"\n  [Target: {target_label} | n = {len(Y)}]")
+        for name, (pipe, grid) in reg_models.items():
+            if grid:
+                estimator = GridSearchCV(pipe, grid, cv=inner_cv, scoring='neg_mean_absolute_error', n_jobs=1)
+            else:
+                estimator = pipe
 
-        preds_dict[name] = y_pred
-        reg_records.append({
-            'model': name,
-            'target': 'KSS_change (ΔKSS)',
-            'n_subjects': int(len(Y)),
-            'cv_r2': float(r2),
-            'cv_mae': float(mae),
-            'pearson_r': float(r_val),
-            'pearson_p': float(p_val),
-        })
-        print(f"  {name:18s}: CV r = {r_val:.3f} (p = {p_val:.4f}) | R² = {r2:.3f} | MAE = {mae:.3f}")
+            y_pred = cross_val_predict(estimator, X, Y, cv=outer_cv)
+            r2 = r2_score(Y, y_pred)
+            mae = mean_absolute_error(Y, y_pred)
+            if np.std(y_pred) > 1e-8:
+                r_val, p_val = stats.pearsonr(Y, y_pred)
+            else:
+                r_val, p_val = 0.0, 1.0
+
+            if target_col == 'KSS_change':
+                primary_preds_dict[name] = y_pred
+                primary_Y = Y
+
+            reg_records.append({
+                'model': name,
+                'target': target_label,
+                'n_subjects': int(len(Y)),
+                'cv_r2': float(r2),
+                'cv_mae': float(mae),
+                'pearson_r': float(r_val),
+                'pearson_p': float(p_val),
+            })
+            print(f"    {name:18s}: CV r = {r_val:.3f} (p = {p_val:.4f}) | R² = {r2:.3f} | MAE = {mae:.3f}")
 
     reg_df = pd.DataFrame(reg_records)
     reg_df.to_csv(RESULTS_DIR / 'tables' / 'aim4_regression_results.csv', index=False)
-    return reg_df, preds_dict, Y
+    return reg_df, primary_preds_dict, primary_Y
 
 
 def plot_aim4_results(clf_df, roc_curves, reg_df, preds_dict, Y):
     fig, axes = plt.subplots(1, 2, figsize=(14, 5.8))
 
-    # 左图：LOSO ROC 曲线对比
     ax = axes[0]
     palette = ['#c0392b', '#2980b9', '#16a085', '#8e44ad', '#d35400']
     for (name, (fpr, tpr, auc)), col in zip(roc_curves.items(), palette):
@@ -242,9 +261,9 @@ def plot_aim4_results(clf_df, roc_curves, reg_df, preds_dict, Y):
     ax.legend(loc='lower right', fontsize=8.8)
     ax.grid(True, linestyle=':', alpha=0.3)
 
-    # 右图：Nested-CV 连续嗜睡增幅预测 (ElasticNet / Ridge)
     ax = axes[1]
-    best_row = reg_df[reg_df['model'] != 'Dummy (Mean)'].sort_values('pearson_r', ascending=False).iloc[0]
+    kss_sub = reg_df[(reg_df['target'] == 'KSS_change (ΔKSS)') & (reg_df['model'] != 'Dummy (Mean)')]
+    best_row = kss_sub.sort_values('pearson_r', ascending=False).iloc[0]
     best_name = best_row['model']
     y_pred = preds_dict[best_name]
 
@@ -268,7 +287,7 @@ def plot_aim4_results(clf_df, roc_curves, reg_df, preds_dict, Y):
 
 def main():
     print("=" * 80)
-    print("Phase 6: Aim 4 - 机器学习基准与个体易感性预测")
+    print("Phase 6: Aim 4 - 机器学习基准与个体易感性预测 (Full Cohort)")
     print("=" * 80)
 
     session_df = pd.read_parquet(FEATURES_DIR / 'eeg_session_features.parquet')

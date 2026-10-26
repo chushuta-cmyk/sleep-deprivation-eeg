@@ -1,10 +1,10 @@
 {
-  "n_subjects": 30,
+  "n_subjects": 66,
   "n_components": 2,
-  "lv1_covariance": 68.4959979016639,
-  "lv1_latent_r": 0.34504462281889736,
-  "lv1_parametric_p": 0.061846165093703366,
-  "lv1_permutation_p": 0.17976404719056188,
+  "lv1_covariance": 66.90977263683462,
+  "lv1_latent_r": 0.2203364925291313,
+  "lv1_parametric_p": 0.07544672797510113,
+  "lv1_permutation_p": 0.8128374325134973,
   "x_features": [
     "posterior_alpha_periodic_power_change",
     "frontal_theta_logpower_change",
@@ -13,34 +13,127 @@
     "global_hjorth_complexity_change"
   ],
   "y_features": [
-    "KSS_change",
-    "SAI_change"
+    "Sleepiness_Z_change",
+    "Sleepiness_Z_NS"
   ],
   "x_weights": [
-    -0.051143739913285434,
-    0.019808957819834817,
-    0.674724070253041,
-    -0.3348456526866789,
-    0.6554523178353798
+    0.9331730044236269,
+    -0.07981893123120022,
+    0.3351181061393728,
+    0.04273324205991971,
+    0.09320304175663904
   ],
   "y_weights": [
-    -0.0037212007531612873,
-    0.22451777439286064
+    0.24288326995710333,
+    -0.09830953712215926
   ],
   "x_bootstrap_ratio": [
-    -0.09706892977598507,
-    0.05993829834564,
-    2.9856195405791457,
-    -1.2180609127763522,
-    3.395947662698921
+    3.187433412391831,
+    -0.1814781883893137,
+    0.9480490198080896,
+    0.11382073298919315,
+    0.2619542178146871
   ],
   "y_bootstrap_ratio": [
-    -0.012799599765468631,
-    1.5140887717973914
+    1.6575655623274175,
+    -0.4800599159093587
   ],
   "stable_x_features": [
-    "global_delta_logpower_change",
-    "global_hjorth_complexity_change"
+    "posterior_alpha_periodic_power_change"
   ],
-  "stable_y_features": []
+  "stable_y_features": [],
+  "subcohort_pvt_pls": {
+    "n_subjects": 25,
+    "n_components": 2,
+    "lv1_covariance": 25.585304505729514,
+    "lv1_latent_r": 0.3655007437538742,
+    "lv1_parametric_p": 0.07238438543336521,
+    "lv1_permutation_p": 0.8880223955208958,
+    "x_features": [
+      "posterior_alpha_periodic_power_change",
+      "frontal_theta_logpower_change",
+      "global_delta_logpower_change",
+      "global_spectral_exponent_change",
+      "global_hjorth_complexity_change"
+    ],
+    "y_features": [
+      "PVT_RT_change",
+      "PVT_RTSD_change",
+      "SSS_change"
+    ],
+    "x_weights": [
+      0.842393247183831,
+      -0.36972927273411726,
+      0.21727219284863908,
+      -0.14819405158392004,
+      0.2906977799579221
+    ],
+    "y_weights": [
+      0.14443891864848107,
+      0.057473855955902514,
+      0.37102652624592547
+    ],
+    "x_bootstrap_ratio": [
+      3.172773323275194,
+      -0.773192876321188,
+      0.6581920003072527,
+      -0.5138185181929908,
+      0.9810225073901111
+    ],
+    "y_bootstrap_ratio": [
+      0.5332075866425129,
+      0.3189449044640428,
+      1.5755322527052498
+    ],
+    "stable_x_features": [
+      "posterior_alpha_periodic_power_change"
+    ],
+    "stable_y_features": []
+  },
+  "subcohort_kss_sai_pls": {
+    "n_subjects": 31,
+    "n_components": 2,
+    "lv1_covariance": 64.9383660246802,
+    "lv1_latent_r": 0.36807860055363584,
+    "lv1_parametric_p": 0.04161890360974088,
+    "lv1_permutation_p": 0.3177364527094581,
+    "x_features": [
+      "posterior_alpha_periodic_power_change",
+      "frontal_theta_logpower_change",
+      "global_delta_logpower_change",
+      "global_spectral_exponent_change",
+      "global_hjorth_complexity_change"
+    ],
+    "y_features": [
+      "KSS_change",
+      "SAI_change"
+    ],
+    "x_weights": [
+      -0.30527599769418123,
+      -0.08530574350057914,
+      0.6366638759907283,
+      -0.29074764006243653,
+      0.6400425096540221
+    ],
+    "y_weights": [
+      -0.09035159347621984,
+      0.23487874929004923
+    ],
+    "x_bootstrap_ratio": [
+      -0.627750159264792,
+      -0.25312264986338934,
+      2.8761638391491253,
+      -1.0684094073965393,
+      3.419557822660556
+    ],
+    "y_bootstrap_ratio": [
+      -0.352326466722215,
+      1.6719380924162446
+    ],
+    "stable_x_features": [
+      "global_delta_logpower_change",
+      "global_hjorth_complexity_change"
+    ],
+    "stable_y_features": []
+  }
 }
