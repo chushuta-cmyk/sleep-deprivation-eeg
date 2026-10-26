@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """
-Phase 7 (Refined): Aim 5 - 脑-行为关联、增量效度 (Incremental Validity ΔR²) 与 Bootstrap 中介分析
-修复与升级项：
-1. 修复原脚本路径缺失 ('v3_conservative') 与未计算行为变化量 (KSS_change, SAI_change) 的 bug。
-2. 联合输出三套统计检验：
-   - Model 1: 基线校正后的脑电变化与主观困倦 (ΔKSS) / 焦虑反应 (ΔSAI) 回归关联；
-   - Model 2: 控制基线睡眠质量 (PSQI) 与基线状态后的增量方差解释度 (ΔR² F-test)；
-   - Model 3: 非参数 Bootstrap (2000次) 路径与中介效应检验。
+Phase 7 (Refined Full-Cohort): Aim 5 - 脑-行为关联、增量效度 (Incremental Validity ΔR²) 与 Bootstrap 中介分析
+升级项：
+1. 全面涵盖 ds004902 全样本 (sub-01 ~ sub-71) 的多维神经行为结局：
+   - Sleepiness_Z_change (全样本统一主观困倦标准化增幅)
+   - KSS_change (Karolinska 主观嗜睡量表增幅)
+   - SSS_change (Stanford 主观嗜睡量表增幅)
+   - PVT_RT_change (客观警觉度任务中位反应时增幅, ms)
+   - PVT_RTSD_change (客观警觉度任务反应时变异性增幅, ms)
+   - SAI_change (状态焦虑量表增幅)
+   - PANAS_P_change_clean / PANAS_N_change_clean (无元数据污染的正负性情绪变化)
 """
 
 import os
@@ -25,11 +28,11 @@ from statsmodels.stats.multitest import multipletests
 
 warnings.filterwarnings('ignore')
 
-CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "analysis_config.yaml"
+CONFIG_PATH = Path("/Users/tan/Documents/qwen-agent/aCAgqOVe0x/default/sleep_deprivation_eeg/config/analysis_config.yaml")
 with open(CONFIG_PATH, 'r') as f:
     config = yaml.safe_load(f)
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path("/Users/tan/Documents/qwen-agent/aCAgqOVe0x/default/sleep_deprivation_eeg")
 FEATURES_DIR = PROJECT_ROOT / config['paths']['features'] / 'v3_conservative'
 RESULTS_DIR = PROJECT_ROOT / config['paths']['results']
 (RESULTS_DIR / 'tables').mkdir(parents=True, exist_ok=True)
@@ -45,12 +48,37 @@ def load_association_data():
     participants_file = PROJECT_ROOT / 'data' / 'raw' / 'participants.tsv'
     part_df = pd.read_csv(participants_file, sep='\t')
 
-    for col in ['KSS_NS', 'KSS_SD', 'SAI_NS', 'SAI_SD', 'PSQI_GlobalScore', 'Age']:
+    num_cols = [
+        'KSS_NS', 'KSS_SD', 'SSS_NS', 'SSS_SD',
+        'SAI_NS', 'SAI_SD',
+        'PVT_item1_NS', 'PVT_item1_SD',
+        'PVT_item2_NS', 'PVT_item2_SD',
+        'PVT_item3_NS', 'PVT_item3_SD',
+        'PANAS_P_NS', 'PANAS_P_SD', 'PANAS_N_NS', 'PANAS_N_SD',
+        'PSQI_GlobalScore', 'Age'
+    ]
+    for col in num_cols:
         if col in part_df.columns:
             part_df[col] = pd.to_numeric(part_df[col], errors='coerce')
 
     part_df['KSS_change'] = part_df['KSS_SD'] - part_df['KSS_NS']
+    part_df['SSS_change'] = part_df['SSS_SD'] - part_df['SSS_NS']
     part_df['SAI_change'] = part_df['SAI_SD'] - part_df['SAI_NS']
+    part_df['PVT_Lapses_change'] = part_df['PVT_item1_SD'] - part_df['PVT_item1_NS']
+    part_df['PVT_RT_change'] = part_df['PVT_item2_SD'] - part_df['PVT_item2_NS']
+    part_df['PVT_RTSD_change'] = part_df['PVT_item3_SD'] - part_df['PVT_item3_NS']
+
+    kss_z_ns = (part_df['KSS_NS'] - part_df['KSS_NS'].mean()) / (part_df['KSS_NS'].std() + 1e-8)
+    sss_z_ns = (part_df['SSS_NS'] - part_df['SSS_NS'].mean()) / (part_df['SSS_NS'].std() + 1e-8)
+    part_df['Sleepiness_Z_NS'] = kss_z_ns.combine_first(sss_z_ns)
+
+    kss_z_chg = (part_df['KSS_change'] - part_df['KSS_change'].mean()) / (part_df['KSS_change'].std() + 1e-8)
+    sss_z_chg = (part_df['SSS_change'] - part_df['SSS_change'].mean()) / (part_df['SSS_change'].std() + 1e-8)
+    part_df['Sleepiness_Z_change'] = kss_z_chg.combine_first(sss_z_chg)
+
+    valid_panas_mask = part_df['SAI_NS'].isna()
+    part_df['PANAS_P_change_clean'] = np.where(valid_panas_mask, part_df['PANAS_P_SD'] - part_df['PANAS_P_NS'], np.nan)
+    part_df['PANAS_N_change_clean'] = np.where(valid_panas_mask, part_df['PANAS_N_SD'] - part_df['PANAS_N_NS'], np.nan)
 
     df = change_df.merge(part_df, left_on='subject', right_on='participant_id', how='left')
     return df
@@ -65,7 +93,6 @@ def run_association_models(df, eeg_features, outcomes):
             if len(sub) < 10:
                 continue
 
-            # 标准化以便比较标准化回归系数 β
             sub_z = (sub - sub.mean()) / (sub.std() + 1e-8)
             r_biv, p_biv = stats.pearsonr(sub[eeg_feat], sub[outcome])
 
@@ -89,8 +116,10 @@ def run_association_models(df, eeg_features, outcomes):
 
     assoc_df = pd.DataFrame(records)
     if len(assoc_df) > 0:
-        _, qvals, _, _ = multipletests(assoc_df['p_adjusted'], alpha=0.05, method='fdr_bh')
-        assoc_df['q_fdr'] = qvals
+        assoc_df['q_fdr'] = np.nan
+        for out_name, grp in assoc_df.groupby('outcome'):
+            _, qvals, _, _ = multipletests(grp['p_adjusted'], alpha=0.05, method='fdr_bh')
+            assoc_df.loc[grp.index, 'q_fdr'] = qvals
     return assoc_df
 
 
@@ -125,16 +154,14 @@ def run_incremental_models(df, eeg_features, outcomes):
 
 
 def run_bootstrap_mediation(df, eeg_features, n_boot=2000):
-    """
-    Bootstrap 路径分析 (X: EEG 变化 -> M: 主观困倦 KSS_change / 基线调节 -> Y: 状态焦虑 SAI_change)
-    同时检验反向耦合路径 (X: EEG 变化 -> M: SAI_change -> Y: KSS_change)
-    """
     np.random.seed(42)
     records = []
 
     triads = [
         ('KSS_change', 'SAI_change'),
         ('SAI_change', 'KSS_change'),
+        ('SSS_change', 'PVT_RT_change'),
+        ('PVT_RT_change', 'SSS_change'),
     ]
 
     for eeg_feat in eeg_features:
@@ -147,7 +174,6 @@ def run_bootstrap_mediation(df, eeg_features, n_boot=2000):
             m = sub_z[med_col].values
             y = sub_z[out_col].values
 
-            # 原始路径系数
             path_a, _, _, p_a, _ = stats.linregress(x, m)
             c_tot, _, _, p_tot, _ = stats.linregress(x, y)
             X_mat = np.column_stack([np.ones(len(x)), x, m])
@@ -155,7 +181,6 @@ def run_bootstrap_mediation(df, eeg_features, n_boot=2000):
             c_prime, path_b = float(betas[1]), float(betas[2])
             indirect = float(path_a * path_b)
 
-            # Bootstrap 95% CI
             boot_ind = np.zeros(n_boot)
             for b in range(n_boot):
                 idx = np.random.choice(len(x), size=len(x), replace=True)
@@ -189,23 +214,25 @@ def run_bootstrap_mediation(df, eeg_features, n_boot=2000):
 
 
 def plot_aim5_figures(df, eeg_features):
-    cols = [c for c in eeg_features + ['KSS_change', 'SAI_change', 'PSQI_GlobalScore'] if c in df.columns]
-    corr_df = df[cols].dropna().corr()
+    cols = [c for c in eeg_features + ['Sleepiness_Z_change', 'KSS_change', 'PVT_RT_change', 'SAI_change', 'PSQI_GlobalScore'] if c in df.columns]
+    corr_df = df[cols].corr()
 
-    fig, ax = plt.subplots(figsize=(9, 7.5))
+    fig, ax = plt.subplots(figsize=(10, 8.5))
     sns.heatmap(
         corr_df, annot=True, fmt='.2f', cmap='RdBu_r', vmin=-0.8, vmax=0.8,
         square=True, linewidths=0.5, ax=ax
     )
-    ax.set_title('Aim 5: Cross-Domain Correlation Matrix (EEG Changes & Behavioral Shifts)', fontweight='bold')
+    ax.set_title('Aim 5: Cross-Domain Correlation Matrix (Pairwise Available N)', fontweight='bold')
     plt.tight_layout()
     plt.savefig(RESULTS_DIR / 'figures' / 'aim5_correlation_matrix.png', dpi=200, bbox_inches='tight')
     plt.close()
 
-    # 关键散点图矩阵
-    outcomes = ['KSS_change', 'SAI_change']
+    outcomes = ['KSS_change', 'PVT_RT_change', 'Sleepiness_Z_change']
+    outcomes = [o for o in outcomes if o in df.columns and df[o].notna().sum() >= 10]
     top_eeg = eeg_features[:4]
-    fig, axes = plt.subplots(len(outcomes), len(top_eeg), figsize=(4.5 * len(top_eeg), 4.2 * len(outcomes)))
+    fig, axes = plt.subplots(len(outcomes), len(top_eeg), figsize=(4.5 * len(top_eeg), 4.0 * len(outcomes)))
+    if len(outcomes) == 1:
+        axes = np.expand_dims(axes, axis=0)
     for i, out_c in enumerate(outcomes):
         for j, eeg_c in enumerate(top_eeg):
             ax = axes[i, j]
@@ -217,7 +244,7 @@ def plot_aim5_figures(df, eeg_features):
             ax.plot(x_line, slope * x_line + intercept, color='#c0392b', linewidth=2)
             ax.set_xlabel(eeg_c.replace('_change', ' Δ'), fontsize=9)
             ax.set_ylabel(out_c, fontsize=9)
-            ax.set_title(f"r = {r_val:.2f} (p = {p_val:.3f})", fontsize=10, fontweight='bold')
+            ax.set_title(f"r = {r_val:.2f} (p = {p_val:.3f}, n={len(sub)})", fontsize=9.5, fontweight='bold')
             ax.grid(True, linestyle=':', alpha=0.3)
 
     plt.tight_layout()
@@ -227,7 +254,7 @@ def plot_aim5_figures(df, eeg_features):
 
 def main():
     print("=" * 80)
-    print("Phase 7: Aim 5 - 脑-行为关联、增量效度与 Bootstrap 中介分析")
+    print("Phase 7: Aim 5 - 脑-行为关联、增量效度与 Bootstrap 中介分析 (Full Cohort)")
     print("=" * 80)
 
     df = load_association_data()
@@ -241,22 +268,31 @@ def main():
         'global_hjorth_complexity_change'
     ]
     eeg_features = [f for f in eeg_features if f in df.columns]
-    outcomes = [('KSS_change', 'KSS_NS'), ('SAI_change', 'SAI_NS')]
+    outcomes = [
+        ('Sleepiness_Z_change', 'Sleepiness_Z_NS'),
+        ('KSS_change', 'KSS_NS'),
+        ('SSS_change', 'SSS_NS'),
+        ('PVT_RT_change', 'PVT_item2_NS'),
+        ('PVT_RTSD_change', 'PVT_item3_NS'),
+        ('SAI_change', 'SAI_NS'),
+        ('PANAS_P_change_clean', 'PANAS_P_NS'),
+        ('PANAS_N_change_clean', 'PANAS_N_NS'),
+    ]
 
     assoc_df = run_association_models(df, eeg_features, outcomes)
     assoc_df.to_csv(RESULTS_DIR / 'tables' / 'aim5_model1_results.csv', index=False)
-    print("\n--- Model 1: 基线校正后关联结果 ---")
-    print(assoc_df[['outcome', 'eeg_feature', 'n_samples', 'bivariate_r', 'std_beta_adjusted', 'p_adjusted']].to_string(index=False))
+    print("\n--- Model 1: 基线校正后关联结果 (Top Associations) ---")
+    print(assoc_df.sort_values('p_adjusted').head(15)[['outcome', 'eeg_feature', 'n_samples', 'bivariate_r', 'std_beta_adjusted', 'p_adjusted']].to_string(index=False))
 
     inc_df = run_incremental_models(df, eeg_features, outcomes)
     inc_df.to_csv(RESULTS_DIR / 'tables' / 'aim5_incremental_validity.csv', index=False)
     print("\n--- Model 2: 增量方差解释度 (ΔR² beyond Baseline & PSQI) ---")
-    print(inc_df[['outcome', 'eeg_feature', 'r2_baseline_psqi', 'r2_with_eeg', 'delta_r2', 'p_change']].to_string(index=False))
+    print(inc_df.sort_values('p_change').head(15)[['outcome', 'eeg_feature', 'n_samples', 'r2_baseline_psqi', 'r2_with_eeg', 'delta_r2', 'p_change']].to_string(index=False))
 
-    med_df = run_bootstrap_mediation(df, eeg_features[:4], n_boot=2000)
+    med_df = run_bootstrap_mediation(df, eeg_features[:5], n_boot=2000)
     med_df.to_csv(RESULTS_DIR / 'tables' / 'aim5_mediation_results.csv', index=False)
     print("\n--- Model 3: Bootstrap 路径与中介检验 ---")
-    print(med_df[['eeg_feature', 'mediator', 'outcome', 'indirect_effect', 'boot_ci_lower', 'boot_ci_upper']].to_string(index=False))
+    print(med_df[['eeg_feature', 'mediator', 'outcome', 'n_samples', 'indirect_effect', 'boot_ci_lower', 'boot_ci_upper']].to_string(index=False))
 
     plot_aim5_figures(df, eeg_features)
 

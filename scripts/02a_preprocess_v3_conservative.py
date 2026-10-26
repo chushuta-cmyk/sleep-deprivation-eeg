@@ -29,11 +29,11 @@ warnings.filterwarnings('ignore')
 mne.set_log_level('ERROR')
 
 # 加载配置
-CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "analysis_config.yaml"
+CONFIG_PATH = Path("/Users/tan/Documents/qwen-agent/aCAgqOVe0x/default/sleep_deprivation_eeg/config/analysis_config.yaml")
 with open(CONFIG_PATH, 'r') as f:
     config = yaml.safe_load(f)
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path("/Users/tan/Documents/qwen-agent/aCAgqOVe0x/default/sleep_deprivation_eeg")
 RAW_DIR = PROJECT_ROOT / config['paths']['raw_data']
 DERIVATIVES_DIR = PROJECT_ROOT / config['paths']['derivatives'] / 'preprocessed_v3_conservative'
 QC_DIR = PROJECT_ROOT / config['paths']['derivatives'] / 'qc_v3_conservative'
@@ -384,6 +384,18 @@ def main():
         if item.is_dir() and item.name.startswith('sub-')
     ])
 
+    qc_file = QC_DIR / "qc_summary_v3_conservative.csv"
+    cached_qc = {}
+    if qc_file.exists():
+        try:
+            old_df = pd.read_csv(qc_file)
+            for _, r in old_df.iterrows():
+                if r.get('status') == 'success' and pd.notna(r.get('epochs_file')) and Path(str(r['epochs_file'])).exists():
+                    cached_qc[(str(r['subject']), int(r['session']))] = r.to_dict()
+            print(f"已加载 {len(cached_qc)} 个已完成会话的缓存预处理记录。")
+        except Exception:
+            pass
+
     all_qc = []
     for _, row in participants.iterrows():
         subject_id = row['participant_id']
@@ -400,16 +412,21 @@ def main():
 
         # 关键修正：在 OpenNeuro ds004902 中，ses-1 恒为 NS，ses-2 恒为 SD
         # (已在数据集 README 及 .set 内部原始文件名验证)
-        qc_s1 = preprocess_subject(subject_id, 1, 'NS', session_order)
-        if qc_s1:
-            all_qc.append(qc_s1)
+        if (subject_id, 1) in cached_qc:
+            all_qc.append(cached_qc[(subject_id, 1)])
+        else:
+            qc_s1 = preprocess_subject(subject_id, 1, 'NS', session_order)
+            if qc_s1:
+                all_qc.append(qc_s1)
 
-        qc_s2 = preprocess_subject(subject_id, 2, 'SD', session_order)
-        if qc_s2:
-            all_qc.append(qc_s2)
+        if (subject_id, 2) in cached_qc:
+            all_qc.append(cached_qc[(subject_id, 2)])
+        else:
+            qc_s2 = preprocess_subject(subject_id, 2, 'SD', session_order)
+            if qc_s2:
+                all_qc.append(qc_s2)
 
     qc_df = pd.DataFrame(all_qc)
-    qc_file = QC_DIR / "qc_summary_v3_conservative.csv"
     qc_df.to_csv(qc_file, index=False)
 
     print("\n" + "=" * 80)

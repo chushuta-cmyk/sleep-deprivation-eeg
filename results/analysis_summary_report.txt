@@ -2,99 +2,164 @@
 睡眠剥夺对静息态 EEG 的影响：多维神经行为表型与机器学习基准报告 (Refined v3)
 Sleep Deprivation Effects on Resting-State EEG: Neurobehavioral Phenotype & ML Benchmark
 ========================================================================================
-报告生成时间: 2026-10-26 16:40:59
+报告生成时间: 2026-10-26 18:28:39
 
 ========================================================================================
 Phase 2: 数据质量控制 (QC) 与样本保留汇总
 ========================================================================================
-总处理会话数 (Sessions): 64 (32 名配对被试 × 2 条件 [NS vs SD])
-成功保留会话数: 64 / 64 (100.0% 配对保留)
-平均清洁时长: 267.3 秒 (中位数: 282.0 秒)
-平均插值修复坏道数: 0.84 个/会话
+总处理会话数 (Sessions): 142 (71 名配对被试 × 2 条件 [NS vs SD])
+成功保留会话数: 142 / 142 (100.0% 配对保留)
+平均清洁时长: 270.3 秒 (中位数: 290.0 秒)
+平均插值修复坏道数: 0.67 个/会话
 
 ========================================================================================
-Aim 1: 睡眠剥夺对静息态 EEG 周期/非周期频谱与时域动力学的影响 (N=32 配对)
+Aim 1: 睡眠剥夺对静息态 EEG 周期/非周期频谱与时域动力学的影响 (N=71 配对)
 ========================================================================================
-                            feature     tier  n    mean_ns    mean_sd  mean_diff        dz  p_value    q_fdr  significant_fdr
-           posterior_alpha_logpower  Primary 32 -11.705158 -11.611485   0.093673  0.425913 0.022111 0.036852             True
-             frontal_theta_logpower  Primary 32 -11.992209 -11.885400   0.106808  0.557298 0.003579 0.008947             True
-              global_delta_logpower  Primary 32 -11.401115 -11.268345   0.132770  0.652766 0.000852 0.004258             True
-           global_spectral_exponent  Primary 32  -0.715060  -0.775800  -0.060740 -0.247015 0.172237 0.215296            False
-     posterior_alpha_peak_frequency  Primary 32  10.406250  10.390625  -0.015625 -0.013006 0.941823 0.941823            False
-     posterior_alpha_periodic_power Extended 32   0.302154   0.348837   0.046683  0.271671 0.134486 0.215178            False
-       frontal_theta_periodic_power Extended 32  -0.075868  -0.028710   0.047158  0.430346 0.020870 0.055654            False
-              global_theta_logpower Extended 32 -12.016087 -11.936041   0.080046  0.464169 0.013310 0.053239            False
-              global_alpha_logpower Extended 32 -11.870797 -11.832109   0.038688  0.238060 0.187850 0.250467            False
-               global_beta_logpower Extended 32 -12.319885 -12.317118   0.002767  0.018573 0.917001 0.917001            False
-frontal_theta_posterior_alpha_ratio Extended 32  -0.287051  -0.273916   0.013135  0.054635 0.759341 0.867818            False
-             global_hjorth_mobility Extended 32   0.364871   0.345683  -0.019188 -0.380399 0.039310 0.078619            False
-           global_hjorth_complexity Extended 32   2.065075   2.248727   0.183652  0.479161 0.010849 0.053239            False
+                            feature     tier  n    mean_ns    mean_sd  mean_diff        dz      p_value        q_fdr  significant_fdr
+           posterior_alpha_logpower  Primary 71 -11.784441 -11.677867   0.106574  0.344529 4.938933e-03 8.231555e-03             True
+             frontal_theta_logpower  Primary 71 -12.038024 -11.873361   0.164663  0.787642 5.699023e-09 2.849512e-08             True
+              global_delta_logpower  Primary 71 -11.415180 -11.289731   0.125449  0.523212 3.674245e-05 9.185614e-05             True
+           global_spectral_exponent  Primary 71  -0.789020  -0.829211  -0.040191 -0.155752 1.936752e-01 2.420940e-01            False
+     posterior_alpha_peak_frequency  Primary 71  10.253521  10.422535   0.169014  0.116841 3.282512e-01 3.282512e-01            False
+     posterior_alpha_periodic_power Extended 71   0.284455   0.328085   0.043630  0.196732 1.018542e-01 1.164048e-01            False
+       frontal_theta_periodic_power Extended 71  -0.050920  -0.025503   0.025417  0.234344 5.225744e-02 6.967658e-02            False
+              global_theta_logpower Extended 71 -12.065715 -11.938243   0.127472  0.755644 1.741503e-08 1.393202e-07             True
+              global_alpha_logpower Extended 71 -11.956870 -11.887740   0.069130  0.323062 8.178590e-03 2.180957e-02             True
+               global_beta_logpower Extended 71 -12.419671 -12.354027   0.065644  0.379488 2.081228e-03 8.324913e-03             True
+frontal_theta_posterior_alpha_ratio Extended 71  -0.253583  -0.195494   0.058090  0.187076 1.194587e-01 1.194587e-01            False
+             global_hjorth_mobility Extended 71   0.349954   0.338388  -0.011566 -0.235680 5.096493e-02 6.967658e-02            False
+           global_hjorth_complexity Extended 71   2.171836   2.257763   0.085927  0.236956 4.975577e-02 6.967658e-02            False
 
 ========================================================================================
 Aim 2: 跨条件个体差异稳定性 (Trait Reliability ICC vs State Sensitivity)
 ========================================================================================
                        feature  n_subjects  icc_agreement  icc_consistency  pearson_r    pearson_p
-      posterior_alpha_logpower          32       0.766715         0.790799   0.797607 4.611855e-08
-        frontal_theta_logpower          32       0.333093         0.389862   0.390551 2.710517e-02
-         global_delta_logpower          32       0.295109         0.368674   0.382037 3.094765e-02
-      global_spectral_exponent          32       0.717297         0.723207   0.724050 2.812629e-06
-posterior_alpha_peak_frequency          32       0.368930         0.361610   0.361677 4.195232e-02
-posterior_alpha_periodic_power          32       0.816141         0.822312   0.827732 5.100044e-09
-  frontal_theta_periodic_power          32       0.592012         0.626090   0.629549 1.132275e-04
-         global_theta_logpower          32       0.334182         0.372791   0.378756 3.254167e-02
-         global_alpha_logpower          32       0.876797         0.879484   0.884377 1.916900e-11
-          global_beta_logpower          32       0.791804         0.786582   0.787341 8.994663e-08
-        global_hjorth_mobility          32       0.650518         0.674539   0.679256 1.915088e-05
-      global_hjorth_complexity          32       0.378702         0.422109   0.471635 6.429802e-03
+      posterior_alpha_logpower          71       0.679055         0.700343   0.705183 6.642244e-12
+        frontal_theta_logpower          71       0.439387         0.557317   0.562300 3.342388e-07
+         global_delta_logpower          71       0.238769         0.283210   0.283372 1.663585e-02
+      global_spectral_exponent          71       0.658022         0.660297   0.662144 3.212100e-10
+posterior_alpha_peak_frequency          71       0.209446         0.209374   0.209643 7.931299e-02
+posterior_alpha_periodic_power          71       0.702407         0.707465   0.708029 5.015559e-12
+  frontal_theta_periodic_power          71       0.624782         0.634117   0.644130 1.358579e-09
+         global_theta_logpower          71       0.587413         0.689115   0.689493 2.950997e-11
+         global_alpha_logpower          71       0.816216         0.828829   0.836144 1.147676e-19
+          global_beta_logpower          71       0.744087         0.766647   0.766707 6.484730e-15
+        global_hjorth_mobility          71       0.676745         0.685567   0.686130 4.013562e-11
+      global_hjorth_complexity          71       0.444772         0.454969   0.454997 6.706523e-05
 
 ========================================================================================
 Aim 3: 多维神经行为表型耦合 (PLS 偏最小二乘分析)
 ========================================================================================
-有效样本量: N = 30
-第一潜变量 (LV1) 脑-行为相关系数: r = 0.345 (参数 p = 0.0618, 置换检验 p = 0.1798)
-    domain                               feature    weight  bootstrap_ratio  stable_95ci
-       EEG posterior_alpha_periodic_power_change -0.051144        -0.097069        False
-       EEG         frontal_theta_logpower_change  0.019809         0.059938        False
-       EEG          global_delta_logpower_change  0.674724         2.985620         True
-       EEG       global_spectral_exponent_change -0.334846        -1.218061        False
-       EEG       global_hjorth_complexity_change  0.655452         3.395948         True
-Behavioral                            KSS_change -0.003721        -0.012800        False
-Behavioral                            SAI_change  0.224518         1.514089        False
+有效样本量: N = 66
+第一潜变量 (LV1) 脑-行为相关系数: r = 0.220 (参数 p = 0.0754, 置换检验 p = 0.8128)
+                 cohort     domain                               feature    weight  bootstrap_ratio  stable_95ci
+ Full_Cohort_Sleepiness        EEG posterior_alpha_periodic_power_change  0.933173         3.187433         True
+ Full_Cohort_Sleepiness        EEG         frontal_theta_logpower_change -0.079819        -0.181478        False
+ Full_Cohort_Sleepiness        EEG          global_delta_logpower_change  0.335118         0.948049        False
+ Full_Cohort_Sleepiness        EEG       global_spectral_exponent_change  0.042733         0.113821        False
+ Full_Cohort_Sleepiness        EEG       global_hjorth_complexity_change  0.093203         0.261954        False
+ Full_Cohort_Sleepiness Behavioral                   Sleepiness_Z_change  0.242883         1.657566        False
+ Full_Cohort_Sleepiness Behavioral                       Sleepiness_Z_NS -0.098310        -0.480060        False
+Subcohort_PVT_Vigilance        EEG posterior_alpha_periodic_power_change  0.842393         3.172773         True
+Subcohort_PVT_Vigilance        EEG         frontal_theta_logpower_change -0.369729        -0.773193        False
+Subcohort_PVT_Vigilance        EEG          global_delta_logpower_change  0.217272         0.658192        False
+Subcohort_PVT_Vigilance        EEG       global_spectral_exponent_change -0.148194        -0.513819        False
+Subcohort_PVT_Vigilance        EEG       global_hjorth_complexity_change  0.290698         0.981023        False
+Subcohort_PVT_Vigilance Behavioral                         PVT_RT_change  0.144439         0.533208        False
+Subcohort_PVT_Vigilance Behavioral                       PVT_RTSD_change  0.057474         0.318945        False
+Subcohort_PVT_Vigilance Behavioral                            SSS_change  0.371027         1.575532        False
+      Subcohort_KSS_SAI        EEG posterior_alpha_periodic_power_change -0.305276        -0.627750        False
+      Subcohort_KSS_SAI        EEG         frontal_theta_logpower_change -0.085306        -0.253123        False
+      Subcohort_KSS_SAI        EEG          global_delta_logpower_change  0.636664         2.876164         True
+      Subcohort_KSS_SAI        EEG       global_spectral_exponent_change -0.290748        -1.068409        False
+      Subcohort_KSS_SAI        EEG       global_hjorth_complexity_change  0.640043         3.419558         True
+      Subcohort_KSS_SAI Behavioral                            KSS_change -0.090352        -0.352326        False
+      Subcohort_KSS_SAI Behavioral                            SAI_change  0.234879         1.671938        False
 
 ========================================================================================
 Aim 4A: 留一被试交叉验证 (LOSO) 脑状态分类基准 (NS vs SD)
 ========================================================================================
-                   model                       cv_scheme  auc_roc  subject_pair_auc_mean  accuracy  f1_score  sensitivity  specificity
-Logistic Regression (L2) LOSO (32 subjects, 64 sessions) 0.862305                0.78125  0.781250  0.781250      0.78125      0.78125
-              Linear SVM LOSO (32 subjects, 64 sessions) 0.834961                0.78125  0.781250  0.781250      0.78125      0.78125
-                 RBF SVM LOSO (32 subjects, 64 sessions) 0.768555                0.71875  0.718750  0.718750      0.71875      0.71875
-           Random Forest LOSO (32 subjects, 64 sessions) 0.811523                0.68750  0.687500  0.687500      0.68750      0.68750
-       Gradient Boosting LOSO (32 subjects, 64 sessions) 0.739258                0.65625  0.671875  0.676923      0.68750      0.65625
+                   model                        cv_scheme  auc_roc  subject_pair_auc_mean  accuracy  f1_score  sensitivity  specificity
+Logistic Regression (L2) LOSO (71 subjects, 142 sessions) 0.874231               0.830986  0.830986  0.830986     0.830986     0.830986
+              Linear SVM LOSO (71 subjects, 142 sessions) 0.880579               0.830986  0.830986  0.830986     0.830986     0.830986
+                 RBF SVM LOSO (71 subjects, 142 sessions) 0.863321               0.873239  0.866197  0.867133     0.873239     0.859155
+           Random Forest LOSO (71 subjects, 142 sessions) 0.876215               0.816901  0.809859  0.811189     0.816901     0.802817
+       Gradient Boosting LOSO (71 subjects, 142 sessions) 0.872843               0.816901  0.809859  0.811189     0.816901     0.802817
 
 ========================================================================================
 Aim 4B: 嵌套交叉验证 (Nested-CV) 主观困倦变化 (ΔKSS) 连续预测
 ========================================================================================
-       model            target  n_subjects     cv_r2   cv_mae  pearson_r  pearson_p
-       Ridge KSS_change (ΔKSS)          32  0.224053 1.320275   0.474181   0.006111
-  ElasticNet KSS_change (ΔKSS)          32  0.188366 1.365036   0.434234   0.013019
-  Linear SVR KSS_change (ΔKSS)          32  0.231166 1.288882   0.482360   0.005176
-Dummy (Mean) KSS_change (ΔKSS)          32 -0.008935 1.581827  -0.128670   0.482783
+       model                                    target  n_subjects     cv_r2    cv_mae  pearson_r    pearson_p
+       Ridge                         KSS_change (ΔKSS)          33  0.327348  1.262798   0.582113 3.797716e-04
+  ElasticNet                         KSS_change (ΔKSS)          33  0.327087  1.265227   0.580513 3.976068e-04
+  Linear SVR                         KSS_change (ΔKSS)          33  0.390867  1.206384   0.628864 8.869209e-05
+Dummy (Mean)                         KSS_change (ΔKSS)          33 -0.035049  1.699862  -0.248244 1.636255e-01
+       Ridge      Sleepiness_Z_change (Full Cohort ΔZ)          66  0.394599  0.599941   0.628764 1.575318e-08
+  ElasticNet      Sleepiness_Z_change (Full Cohort ΔZ)          66  0.351331  0.640012   0.594747 1.396000e-07
+  Linear SVR      Sleepiness_Z_change (Full Cohort ΔZ)          66  0.293218  0.664148   0.553748 1.415055e-06
+Dummy (Mean)      Sleepiness_Z_change (Full Cohort ΔZ)          66 -0.016074  0.805090  -0.170792 1.703423e-01
+       Ridge PVT_RTSD_change (ΔPVT RT Variability, ms)          26  0.551258 11.957536   0.749867 1.033312e-05
+  ElasticNet PVT_RTSD_change (ΔPVT RT Variability, ms)          26  0.550535 12.051063   0.748715 1.084774e-05
+  Linear SVR PVT_RTSD_change (ΔPVT RT Variability, ms)          26  0.535828 13.839220   0.742241 1.418662e-05
+Dummy (Mean) PVT_RTSD_change (ΔPVT RT Variability, ms)          26 -0.071208 20.884117  -0.355168 7.499268e-02
 
 ========================================================================================
 Aim 5: 脑电特征对睡眠剥夺反应的增量方差解释度 (ΔR² beyond Baseline & PSQI)
 ========================================================================================
-   outcome                           eeg_feature  n_samples  r2_baseline_psqi  r2_with_eeg  delta_r2  f_change  p_change
-KSS_change       posterior_alpha_logpower_change         30          0.244567     0.297782  0.053216  1.970335  0.172244
-KSS_change         frontal_theta_logpower_change         30          0.244567     0.324597  0.080030  3.080810  0.090999
-KSS_change          global_delta_logpower_change         30          0.244567     0.244733  0.000166  0.005715  0.940317
-KSS_change       global_spectral_exponent_change         30          0.244567     0.285438  0.040871  1.487129  0.233610
-KSS_change posterior_alpha_periodic_power_change         30          0.244567     0.402897  0.158331  6.894294  0.014297
-KSS_change   frontal_theta_periodic_power_change         30          0.244567     0.272575  0.028008  1.001084  0.326270
-KSS_change       global_hjorth_complexity_change         30          0.244567     0.244576  0.000009  0.000311  0.986064
-SAI_change       posterior_alpha_logpower_change         30          0.463579     0.465431  0.001851  0.090042  0.766510
-SAI_change         frontal_theta_logpower_change         30          0.463579     0.467462  0.003883  0.189572  0.666866
-SAI_change          global_delta_logpower_change         30          0.463579     0.513455  0.049876  2.665247  0.114616
-SAI_change       global_spectral_exponent_change         30          0.463579     0.482231  0.018652  0.936599  0.342071
-SAI_change posterior_alpha_periodic_power_change         30          0.463579     0.475750  0.012171  0.603592  0.444222
-SAI_change   frontal_theta_periodic_power_change         30          0.463579     0.468549  0.004969  0.243119  0.626101
-SAI_change       global_hjorth_complexity_change         30          0.463579     0.494589  0.031010  1.595255  0.217787
+             outcome                           eeg_feature  n_samples  r2_baseline_psqi  r2_with_eeg     delta_r2  f_change  p_change
+ Sleepiness_Z_change       posterior_alpha_logpower_change         63          0.427464     0.441476 1.401132e-02  1.480092  0.228605
+ Sleepiness_Z_change         frontal_theta_logpower_change         63          0.427464     0.444092 1.662798e-02  1.764773  0.189146
+ Sleepiness_Z_change          global_delta_logpower_change         63          0.427464     0.430997 3.532341e-03  0.366269  0.547366
+ Sleepiness_Z_change       global_spectral_exponent_change         63          0.427464     0.432717 5.252596e-03  0.546294  0.462767
+ Sleepiness_Z_change posterior_alpha_periodic_power_change         63          0.427464     0.472388 4.492349e-02  5.023549  0.028781
+ Sleepiness_Z_change   frontal_theta_periodic_power_change         63          0.427464     0.450500 2.303577e-02  2.473359  0.121138
+ Sleepiness_Z_change       global_hjorth_complexity_change         63          0.427464     0.431919 4.454208e-03  0.462607  0.499069
+          KSS_change       posterior_alpha_logpower_change         31          0.242267     0.295649 5.338237e-02  2.046316  0.164047
+          KSS_change         frontal_theta_logpower_change         31          0.242267     0.317571 7.530399e-02  2.979368  0.095760
+          KSS_change          global_delta_logpower_change         31          0.242267     0.242278 1.075002e-05  0.000383  0.984529
+          KSS_change       global_spectral_exponent_change         31          0.242267     0.257195 1.492766e-02  0.542601  0.467709
+          KSS_change posterior_alpha_periodic_power_change         31          0.242267     0.385992 1.437247e-01  6.320055  0.018204
+          KSS_change   frontal_theta_periodic_power_change         31          0.242267     0.295736 5.346887e-02  2.049883  0.163693
+          KSS_change       global_hjorth_complexity_change         31          0.242267     0.242485 2.178654e-04  0.007765  0.930431
+          SSS_change       posterior_alpha_logpower_change         32          0.670266     0.672447 2.181587e-03  0.186487  0.669164
+          SSS_change         frontal_theta_logpower_change         32          0.670266     0.670267 9.901044e-07  0.000084  0.992749
+          SSS_change          global_delta_logpower_change         32          0.670266     0.693391 2.312492e-02  2.111800  0.157284
+          SSS_change       global_spectral_exponent_change         32          0.670266     0.670289 2.308615e-05  0.001961  0.964997
+          SSS_change posterior_alpha_periodic_power_change         32          0.670266     0.682929 1.266310e-02  1.118256  0.299333
+          SSS_change   frontal_theta_periodic_power_change         32          0.670266     0.678698 8.431878e-03  0.734799  0.398610
+          SSS_change       global_hjorth_complexity_change         32          0.670266     0.704389 3.412289e-02  3.232084  0.083001
+       PVT_RT_change       posterior_alpha_logpower_change         26          0.245659     0.324948 7.928860e-02  2.584020  0.122206
+       PVT_RT_change         frontal_theta_logpower_change         26          0.245659     0.269226 2.356662e-02  0.709474  0.408682
+       PVT_RT_change          global_delta_logpower_change         26          0.245659     0.268145 2.248636e-02  0.675954  0.419805
+       PVT_RT_change       global_spectral_exponent_change         26          0.245659     0.245740 8.098202e-05  0.002362  0.961676
+       PVT_RT_change posterior_alpha_periodic_power_change         26          0.245659     0.251060 5.400843e-03  0.158649  0.694243
+       PVT_RT_change   frontal_theta_periodic_power_change         26          0.245659     0.251661 6.002113e-03  0.176453  0.678514
+       PVT_RT_change       global_hjorth_complexity_change         26          0.245659     0.259330 1.367149e-02  0.406082  0.530541
+     PVT_RTSD_change       posterior_alpha_logpower_change         26          0.648818     0.656496 7.678038e-03  0.491746  0.490501
+     PVT_RTSD_change         frontal_theta_logpower_change         26          0.648818     0.701823 5.300507e-02  3.910805  0.060638
+     PVT_RTSD_change          global_delta_logpower_change         26          0.648818     0.661555 1.273741e-02  0.827973  0.372721
+     PVT_RTSD_change       global_spectral_exponent_change         26          0.648818     0.666993 1.817464e-02  1.200701  0.285033
+     PVT_RTSD_change posterior_alpha_periodic_power_change         26          0.648818     0.648895 7.650769e-05  0.004794  0.945426
+     PVT_RTSD_change   frontal_theta_periodic_power_change         26          0.648818     0.656939 8.121034e-03  0.520790  0.478105
+     PVT_RTSD_change       global_hjorth_complexity_change         26          0.648818     0.650270 1.452085e-03  0.091344  0.765314
+          SAI_change       posterior_alpha_logpower_change         31          0.452206     0.453734 1.528125e-03  0.075530  0.785541
+          SAI_change         frontal_theta_logpower_change         31          0.452206     0.456080 3.873410e-03  0.192275  0.664519
+          SAI_change          global_delta_logpower_change         31          0.452206     0.502662 5.045591e-02  2.739204  0.109493
+          SAI_change       global_spectral_exponent_change         31          0.452206     0.466132 1.392608e-02  0.704302  0.408711
+          SAI_change posterior_alpha_periodic_power_change         31          0.452206     0.465089 1.288285e-02  0.650271  0.427062
+          SAI_change   frontal_theta_periodic_power_change         31          0.452206     0.455339 3.133090e-03  0.155314  0.696603
+          SAI_change       global_hjorth_complexity_change         31          0.452206     0.483525 3.131886e-02  1.637271  0.211587
+PANAS_P_change_clean       posterior_alpha_logpower_change         33          0.525885     0.526156 2.711149e-04  0.016593  0.898395
+PANAS_P_change_clean         frontal_theta_logpower_change         33          0.525885     0.527232 1.347299e-03  0.082644  0.775790
+PANAS_P_change_clean          global_delta_logpower_change         33          0.525885     0.525947 6.274243e-05  0.003838  0.951025
+PANAS_P_change_clean       global_spectral_exponent_change         33          0.525885     0.549373 2.348838e-02  1.511589  0.228779
+PANAS_P_change_clean posterior_alpha_periodic_power_change         33          0.525885     0.528123 2.238911e-03  0.137596  0.713379
+PANAS_P_change_clean   frontal_theta_periodic_power_change         33          0.525885     0.527736 1.850964e-03  0.113661  0.738442
+PANAS_P_change_clean       global_hjorth_complexity_change         33          0.525885     0.525899 1.422814e-05  0.000870  0.976667
+PANAS_N_change_clean       posterior_alpha_logpower_change         33          0.340488     0.347611 7.123398e-03  0.316649  0.577953
+PANAS_N_change_clean         frontal_theta_logpower_change         33          0.340488     0.383370 4.288203e-02  2.016733  0.166236
+PANAS_N_change_clean          global_delta_logpower_change         33          0.340488     0.341438 9.509436e-04  0.041875  0.839287
+PANAS_N_change_clean       global_spectral_exponent_change         33          0.340488     0.343763 3.275061e-03  0.144729  0.706396
+PANAS_N_change_clean posterior_alpha_periodic_power_change         33          0.340488     0.341372 8.849301e-04  0.038964  0.844896
+PANAS_N_change_clean   frontal_theta_periodic_power_change         33          0.340488     0.383107 4.261941e-02  2.003529  0.167584
+PANAS_N_change_clean       global_hjorth_complexity_change         33          0.340488     0.342206 1.718879e-03  0.075780  0.785052

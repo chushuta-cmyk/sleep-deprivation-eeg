@@ -9,7 +9,7 @@ from pathlib import Path
 from datetime import datetime
 import pandas as pd
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path("/Users/tan/Documents/qwen-agent/aCAgqOVe0x/default/sleep_deprivation_eeg")
 RESULTS_DIR = PROJECT_ROOT / "results"
 TABLES_DIR = RESULTS_DIR / "tables"
 QC_FILE = PROJECT_ROOT / "data" / "derivatives" / "qc_v3_conservative" / "qc_summary_v3_conservative.csv"
@@ -26,10 +26,11 @@ def main():
     # 0. QC Summary
     if QC_FILE.exists():
         qc_df = pd.read_csv(QC_FILE)
+        n_sub_qc = qc_df['subject'].nunique()
         lines.append("=" * 88)
         lines.append("Phase 2: 数据质量控制 (QC) 与样本保留汇总")
         lines.append("=" * 88)
-        lines.append(f"总处理会话数 (Sessions): {len(qc_df)} (32 名配对被试 × 2 条件 [NS vs SD])")
+        lines.append(f"总处理会话数 (Sessions): {len(qc_df)} ({n_sub_qc} 名配对被试 × 2 条件 [NS vs SD])")
         lines.append(f"成功保留会话数: {(qc_df['status'] == 'success').sum()} / {len(qc_df)} (100.0% 配对保留)")
         lines.append(f"平均清洁时长: {qc_df['clean_duration_sec'].mean():.1f} 秒 (中位数: {qc_df['clean_duration_sec'].median():.1f} 秒)")
         lines.append(f"平均插值修复坏道数: {qc_df['n_interpolated_channels'].mean():.2f} 个/会话\n")
@@ -38,8 +39,9 @@ def main():
     aim1_file = TABLES_DIR / "aim1_paired_effects.csv"
     if aim1_file.exists():
         df1 = pd.read_csv(aim1_file)
+        n_aim1 = int(df1['n'].iloc[0])
         lines.append("=" * 88)
-        lines.append("Aim 1: 睡眠剥夺对静息态 EEG 周期/非周期频谱与时域动力学的影响 (N=32 配对)")
+        lines.append(f"Aim 1: 睡眠剥夺对静息态 EEG 周期/非周期频谱与时域动力学的影响 (N={n_aim1} 配对)")
         lines.append("=" * 88)
         cols = ['feature', 'tier', 'n', 'mean_ns', 'mean_sd', 'mean_diff', 'dz', 'p_value', 'q_fdr', 'significant_fdr']
         lines.append(df1[cols].to_string(index=False))
