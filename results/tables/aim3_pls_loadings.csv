@@ -1,0 +1,8 @@
+domain,feature,weight,bootstrap_ratio,stable_95ci
+EEG,posterior_alpha_periodic_power_change,-0.051143739913285434,-0.09706892977598507,False
+EEG,frontal_theta_logpower_change,0.019808957819834817,0.05993829834564,False
+EEG,global_delta_logpower_change,0.674724070253041,2.9856195405791457,True
+EEG,global_spectral_exponent_change,-0.3348456526866789,-1.2180609127763522,False
+EEG,global_hjorth_complexity_change,0.6554523178353798,3.395947662698921,True
+Behavioral,KSS_change,-0.0037212007531612873,-0.012799599765468631,False
+Behavioral,SAI_change,0.22451777439286064,1.5140887717973914,False

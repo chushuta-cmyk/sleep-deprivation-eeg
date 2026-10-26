@@ -1,0 +1,46 @@
+{
+  "n_subjects": 30,
+  "n_components": 2,
+  "lv1_covariance": 68.4959979016639,
+  "lv1_latent_r": 0.34504462281889736,
+  "lv1_parametric_p": 0.061846165093703366,
+  "lv1_permutation_p": 0.17976404719056188,
+  "x_features": [
+    "posterior_alpha_periodic_power_change",
+    "frontal_theta_logpower_change",
+    "global_delta_logpower_change",
+    "global_spectral_exponent_change",
+    "global_hjorth_complexity_change"
+  ],
+  "y_features": [
+    "KSS_change",
+    "SAI_change"
+  ],
+  "x_weights": [
+    -0.051143739913285434,
+    0.019808957819834817,
+    0.674724070253041,
+    -0.3348456526866789,
+    0.6554523178353798
+  ],
+  "y_weights": [
+    -0.0037212007531612873,
+    0.22451777439286064
+  ],
+  "x_bootstrap_ratio": [
+    -0.09706892977598507,
+    0.05993829834564,
+    2.9856195405791457,
+    -1.2180609127763522,
+    3.395947662698921
+  ],
+  "y_bootstrap_ratio": [
+    -0.012799599765468631,
+    1.5140887717973914
+  ],
+  "stable_x_features": [
+    "global_delta_logpower_change",
+    "global_hjorth_complexity_change"
+  ],
+  "stable_y_features": []
+}

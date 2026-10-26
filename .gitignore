@@ -1,0 +1,27 @@
+# Raw BIDS & Preprocessed EEG binary files (keep out of Git; download via scripts/01_download_data.py)
+data/raw/
+data/derivatives/
+*.set
+*.fdt
+*.fif
+*.edf
+*.bdf
+*.vhdr
+*.vmrk
+*.eeg
+*.parquet
+
+# Python cache & environments
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+
+# OS & Editor files
+.DS_Store
+~$*
+*.swp
