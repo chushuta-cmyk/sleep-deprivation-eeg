@@ -20,11 +20,11 @@ from scipy import stats
 
 warnings.filterwarnings('ignore')
 
-CONFIG_PATH = Path("/Users/tan/Documents/qwen-agent/aCAgqOVe0x/default/sleep_deprivation_eeg/config/analysis_config.yaml")
+CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "analysis_config.yaml"
 with open(CONFIG_PATH, 'r') as f:
     config = yaml.safe_load(f)
 
-PROJECT_ROOT = Path("/Users/tan/Documents/qwen-agent/aCAgqOVe0x/default/sleep_deprivation_eeg")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 FEATURES_DIR = PROJECT_ROOT / config['paths']['features'] / 'v3_conservative'
 RESULTS_DIR = PROJECT_ROOT / config['paths']['results']
 (RESULTS_DIR / 'tables').mkdir(parents=True, exist_ok=True)
