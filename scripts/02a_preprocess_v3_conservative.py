@@ -29,11 +29,11 @@ warnings.filterwarnings('ignore')
 mne.set_log_level('ERROR')
 
 # 加载配置
-CONFIG_PATH = Path("/Users/tan/Documents/qwen-agent/aCAgqOVe0x/default/sleep_deprivation_eeg/config/analysis_config.yaml")
+CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "analysis_config.yaml"
 with open(CONFIG_PATH, 'r') as f:
     config = yaml.safe_load(f)
 
-PROJECT_ROOT = Path("/Users/tan/Documents/qwen-agent/aCAgqOVe0x/default/sleep_deprivation_eeg")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 RAW_DIR = PROJECT_ROOT / config['paths']['raw_data']
 DERIVATIVES_DIR = PROJECT_ROOT / config['paths']['derivatives'] / 'preprocessed_v3_conservative'
 QC_DIR = PROJECT_ROOT / config['paths']['derivatives'] / 'qc_v3_conservative'

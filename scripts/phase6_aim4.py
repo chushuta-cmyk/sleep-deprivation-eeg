@@ -36,11 +36,11 @@ from sklearn.metrics import (
 
 warnings.filterwarnings('ignore')
 
-CONFIG_PATH = Path("/Users/tan/Documents/qwen-agent/aCAgqOVe0x/default/sleep_deprivation_eeg/config/analysis_config.yaml")
+CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "analysis_config.yaml"
 with open(CONFIG_PATH, 'r') as f:
     config = yaml.safe_load(f)
 
-PROJECT_ROOT = Path("/Users/tan/Documents/qwen-agent/aCAgqOVe0x/default/sleep_deprivation_eeg")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 FEATURES_DIR = PROJECT_ROOT / config['paths']['features'] / 'v3_conservative'
 RESULTS_DIR = PROJECT_ROOT / config['paths']['results']
 (RESULTS_DIR / 'tables').mkdir(parents=True, exist_ok=True)
@@ -125,20 +125,39 @@ def run_task_a_loso_classification(session_df):
         sens = tp / (tp + fn) if (tp + fn) > 0 else 0.0
         spec = tn / (tn + fp) if (tn + fp) > 0 else 0.0
 
+        # Subject-level Bootstrap 95% CI (1000 resamples)
+        np.random.seed(42)
+        unique_groups = np.unique(groups)
+        boot_aucs = []
+        boot_accs = []
+        for _ in range(1000):
+            b_subjs = np.random.choice(unique_groups, size=len(unique_groups), replace=True)
+            b_idx = np.concatenate([np.where(groups == s)[0] for s in b_subjs])
+            if len(np.unique(y[b_idx])) == 2:
+                boot_aucs.append(roc_auc_score(y[b_idx], y_prob[b_idx]))
+                boot_accs.append(accuracy_score(y[b_idx], y_pred[b_idx]))
+
+        auc_ci = np.percentile(boot_aucs, [2.5, 97.5])
+        acc_ci = np.percentile(boot_accs, [2.5, 97.5])
+
         fpr, tpr, _ = roc_curve(y, y_prob)
-        roc_curves[name] = (fpr, tpr, auc)
+        roc_curves[name] = (fpr, tpr, auc, auc_ci)
 
         clf_records.append({
             'model': name,
             'cv_scheme': f'LOSO ({n_sub} subjects, {len(y)} sessions)',
             'auc_roc': float(auc),
+            'auc_ci_lower': float(auc_ci[0]),
+            'auc_ci_upper': float(auc_ci[1]),
             'subject_pair_auc_mean': float(np.mean(subject_aucs)),
             'accuracy': float(acc),
+            'acc_ci_lower': float(acc_ci[0]),
+            'acc_ci_upper': float(acc_ci[1]),
             'f1_score': float(f1),
             'sensitivity': float(sens),
             'specificity': float(spec),
         })
-        print(f"  {name:26s}: AUC = {auc:.3f} | Pair-AUC = {np.mean(subject_aucs):.3f} | Acc = {acc:.3f} | F1 = {f1:.3f}")
+        print(f"  {name:26s}: AUC = {auc:.3f} [{auc_ci[0]:.3f}, {auc_ci[1]:.3f}] | Pair-AUC = {np.mean(subject_aucs):.3f} | Acc = {acc:.3f} [{acc_ci[0]:.3f}, {acc_ci[1]:.3f}] | F1 = {f1:.3f}")
 
     clf_df = pd.DataFrame(clf_records)
     clf_df.to_csv(RESULTS_DIR / 'tables' / 'aim4_classification_benchmark.csv', index=False)
@@ -201,8 +220,7 @@ def run_task_b_nested_cv_regression():
     }
 
     reg_records = []
-    primary_preds_dict = {}
-    primary_Y = None
+    all_targets_preds = {}
 
     for target_label, target_col, pred_cols in targets_spec:
         pred_cols = [c for c in pred_cols if c in df.columns]
@@ -213,6 +231,7 @@ def run_task_b_nested_cv_regression():
         Y = clean_df[target_col].values
 
         print(f"\n  [Target: {target_label} | n = {len(Y)}]")
+        target_preds = {}
         for name, (pipe, grid) in reg_models.items():
             if grid:
                 estimator = GridSearchCV(pipe, grid, cv=inner_cv, scoring='neg_mean_absolute_error', n_jobs=1)
@@ -227,9 +246,7 @@ def run_task_b_nested_cv_regression():
             else:
                 r_val, p_val = 0.0, 1.0
 
-            if target_col == 'KSS_change':
-                primary_preds_dict[name] = y_pred
-                primary_Y = Y
+            target_preds[name] = (y_pred, r_val, p_val, r2, mae)
 
             reg_records.append({
                 'model': name,
@@ -242,47 +259,93 @@ def run_task_b_nested_cv_regression():
             })
             print(f"    {name:18s}: CV r = {r_val:.3f} (p = {p_val:.4f}) | R² = {r2:.3f} | MAE = {mae:.3f}")
 
+        # Find best non-dummy model
+        non_dummy = {k: v for k, v in target_preds.items() if k != 'Dummy (Mean)'}
+        best_k = max(non_dummy.keys(), key=lambda k: non_dummy[k][1])
+        all_targets_preds[target_col] = {
+            'best_name': best_k,
+            'y_pred': non_dummy[best_k][0],
+            'Y': Y,
+            'r': non_dummy[best_k][1],
+            'p': non_dummy[best_k][2],
+            'r2': non_dummy[best_k][3],
+            'mae': non_dummy[best_k][4],
+            'label': target_label
+        }
+
     reg_df = pd.DataFrame(reg_records)
     reg_df.to_csv(RESULTS_DIR / 'tables' / 'aim4_regression_results.csv', index=False)
-    return reg_df, primary_preds_dict, primary_Y
+    return reg_df, all_targets_preds
 
 
-def plot_aim4_results(clf_df, roc_curves, reg_df, preds_dict, Y):
-    fig, axes = plt.subplots(1, 2, figsize=(14, 5.8))
+def plot_aim4_results(clf_df, roc_curves, reg_df, all_targets_preds):
+    fig, axes = plt.subplots(2, 2, figsize=(14, 11))
 
-    ax = axes[0]
+    # Panel A: LOSO ROC Curves
+    ax = axes[0, 0]
     palette = ['#c0392b', '#2980b9', '#16a085', '#8e44ad', '#d35400']
-    for (name, (fpr, tpr, auc)), col in zip(roc_curves.items(), palette):
-        ax.plot(fpr, tpr, linewidth=2.2, color=col, label=f"{name} (AUC = {auc:.3f})")
+    for (name, (fpr, tpr, auc, auc_ci)), col in zip(roc_curves.items(), palette):
+        ax.plot(fpr, tpr, linewidth=2.2, color=col, label=f"{name}\nAUC = {auc:.3f} [{auc_ci[0]:.2f}, {auc_ci[1]:.2f}]")
     ax.plot([0, 1], [0, 1], 'k--', alpha=0.5, label='Chance (AUC = 0.500)')
     ax.set_xlabel('False Positive Rate (1 - Specificity)', fontweight='bold')
     ax.set_ylabel('True Positive Rate (Sensitivity)', fontweight='bold')
-    ax.set_title('Aim 4A: LOSO State Classification (NS vs SD)', fontweight='bold')
-    ax.legend(loc='lower right', fontsize=8.8)
+    ax.set_title('(A) Aim 4A: LOSO Brain-State Decoding (N=71, 142 sess)', fontweight='bold')
+    ax.legend(loc='lower right', fontsize=8.0)
     ax.grid(True, linestyle=':', alpha=0.3)
 
-    ax = axes[1]
-    kss_sub = reg_df[(reg_df['target'] == 'KSS_change (ΔKSS)') & (reg_df['model'] != 'Dummy (Mean)')]
-    best_row = kss_sub.sort_values('pearson_r', ascending=False).iloc[0]
-    best_name = best_row['model']
-    y_pred = preds_dict[best_name]
+    # Panel B: Full Cohort Sleepiness_Z_change (N=66)
+    ax = axes[0, 1]
+    if 'Sleepiness_Z_change' in all_targets_preds:
+        info = all_targets_preds['Sleepiness_Z_change']
+        Y, y_pred = info['Y'], info['y_pred']
+        ax.scatter(Y, y_pred, s=55, color='#2980b9', alpha=0.8, edgecolors='black')
+        slope, intercept, _, _, _ = stats.linregress(Y, y_pred)
+        x_line = np.linspace(Y.min(), Y.max(), 100)
+        ax.plot(x_line, slope * x_line + intercept, color='#c0392b', linewidth=2.2,
+                label=f"{info['best_name']}: r = {info['r']:.2f} (p = {info['p']:.2e})\nR² = {info['r2']:.2f}, MAE = {info['mae']:.2f}")
+        ax.set_xlabel('Observed Unified ΔZ (SD - NS)', fontweight='bold')
+        ax.set_ylabel('Out-of-Fold Predicted ΔZ', fontweight='bold')
+        ax.set_title(f"(B) Aim 4B: Full-Cohort Sleepiness ({info['best_name']}, N=66)", fontweight='bold')
+        ax.legend(loc='upper left', fontsize=9.0)
+        ax.grid(True, linestyle=':', alpha=0.3)
 
-    ax.scatter(Y, y_pred, s=65, color='#2980b9', alpha=0.8, edgecolors='black')
-    slope, intercept, r_val, p_val, _ = stats.linregress(Y, y_pred)
-    x_line = np.linspace(Y.min(), Y.max(), 100)
-    ax.plot(x_line, slope * x_line + intercept, color='#c0392b', linewidth=2.2,
-            label=f"{best_name}: r = {r_val:.2f} (p = {p_val:.4f})\nMAE = {best_row['cv_mae']:.2f}")
-    ax.set_xlabel('Observed ΔKSS (SD - NS)', fontweight='bold')
-    ax.set_ylabel('Out-of-Fold Predicted ΔKSS', fontweight='bold')
-    ax.set_title(f'Aim 4B: Nested-CV Vulnerability Prediction ({best_name})', fontweight='bold')
-    ax.legend(loc='upper left', fontsize=9.5)
-    ax.grid(True, linestyle=':', alpha=0.3)
+    # Panel C: KSS_change (N=33)
+    ax = axes[1, 0]
+    if 'KSS_change' in all_targets_preds:
+        info = all_targets_preds['KSS_change']
+        Y, y_pred = info['Y'], info['y_pred']
+        ax.scatter(Y, y_pred, s=60, color='#16a085', alpha=0.8, edgecolors='black')
+        slope, intercept, _, _, _ = stats.linregress(Y, y_pred)
+        x_line = np.linspace(Y.min(), Y.max(), 100)
+        ax.plot(x_line, slope * x_line + intercept, color='#c0392b', linewidth=2.2,
+                label=f"{info['best_name']}: r = {info['r']:.2f} (p = {info['p']:.4f})\nR² = {info['r2']:.2f}, MAE = {info['mae']:.2f}")
+        ax.set_xlabel('Observed ΔKSS (SD - NS)', fontweight='bold')
+        ax.set_ylabel('Out-of-Fold Predicted ΔKSS', fontweight='bold')
+        ax.set_title(f"(C) Aim 4B: Karolinska Sleepiness ({info['best_name']}, N=33)", fontweight='bold')
+        ax.legend(loc='upper left', fontsize=9.0)
+        ax.grid(True, linestyle=':', alpha=0.3)
+
+    # Panel D: PVT_RTSD_change (N=26)
+    ax = axes[1, 1]
+    if 'PVT_RTSD_change' in all_targets_preds:
+        info = all_targets_preds['PVT_RTSD_change']
+        Y, y_pred = info['Y'], info['y_pred']
+        ax.scatter(Y, y_pred, s=60, color='#8e44ad', alpha=0.8, edgecolors='black')
+        slope, intercept, _, _, _ = stats.linregress(Y, y_pred)
+        x_line = np.linspace(Y.min(), Y.max(), 100)
+        ax.plot(x_line, slope * x_line + intercept, color='#c0392b', linewidth=2.2,
+                label=f"{info['best_name']}: r = {info['r']:.2f} (p = {info['p']:.2e})\nR² = {info['r2']:.2f}, MAE = {info['mae']:.1f} ms")
+        ax.set_xlabel('Observed ΔPVT RT SD (ms)', fontweight='bold')
+        ax.set_ylabel('Out-of-Fold Predicted ΔPVT RT SD (ms)', fontweight='bold')
+        ax.set_title(f"(D) Aim 4B: Objective Vigilance Variability ({info['best_name']}, N=26)", fontweight='bold')
+        ax.legend(loc='upper left', fontsize=9.0)
+        ax.grid(True, linestyle=':', alpha=0.3)
 
     plt.tight_layout()
     fig_path = RESULTS_DIR / 'figures' / 'aim4_model_comparison.png'
     plt.savefig(fig_path, dpi=200, bbox_inches='tight')
     plt.close()
-    print(f"\n✓ Aim 4 模型对比图已保存: {fig_path}")
+    print(f"\n✓ Aim 4 四联模型对比图已保存: {fig_path}")
 
 
 def main():
@@ -292,8 +355,8 @@ def main():
 
     session_df = pd.read_parquet(FEATURES_DIR / 'eeg_session_features.parquet')
     clf_df, roc_curves, _, _, _ = run_task_a_loso_classification(session_df)
-    reg_df, preds_dict, Y = run_task_b_nested_cv_regression()
-    plot_aim4_results(clf_df, roc_curves, reg_df, preds_dict, Y)
+    reg_df, all_targets_preds = run_task_b_nested_cv_regression()
+    plot_aim4_results(clf_df, roc_curves, reg_df, all_targets_preds)
 
 
 if __name__ == '__main__':

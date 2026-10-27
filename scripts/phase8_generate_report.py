@@ -9,7 +9,7 @@ from pathlib import Path
 from datetime import datetime
 import pandas as pd
 
-PROJECT_ROOT = Path("/Users/tan/Documents/qwen-agent/aCAgqOVe0x/default/sleep_deprivation_eeg")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 RESULTS_DIR = PROJECT_ROOT / "results"
 TABLES_DIR = RESULTS_DIR / "tables"
 QC_FILE = PROJECT_ROOT / "data" / "derivatives" / "qc_v3_conservative" / "qc_summary_v3_conservative.csv"

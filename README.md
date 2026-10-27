@@ -47,6 +47,7 @@ sleep_deprivation_eeg_github_repo/
 │   ├── phase6_aim4.py                         # Aim 4: LOSO State Classification & Nested-CV Vulnerability Regression
 │   ├── phase7_aim5.py                         # Aim 5: Incremental Validity (ΔR² F-test) & Bootstrap Mediation
 │   ├── 09_normative_csd_19ch_validation.py    # Phase 9: Empirical validation of 19-ch CAR+CSD, MST Graph & Normative Z
+│   ├── generate_topomap_figure.py             # Generates Figure 2 (61-channel topographical scalp difference maps)
 │   ├── phase8_generate_report.py              # Automated non-hallucinated summary report generator
 │   └── run_all.py                             # One-click end-to-end execution script
 ├── notebooks/
