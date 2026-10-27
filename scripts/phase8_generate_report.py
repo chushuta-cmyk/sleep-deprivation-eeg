@@ -58,6 +58,14 @@ def main():
         lines.append(df2[cols].to_string(index=False))
         lines.append("")
 
+    delta_icc_file = TABLES_DIR / "aim2_delta_icc_bootstrap.csv"
+    if delta_icc_file.exists():
+        df_dicc = pd.read_csv(delta_icc_file)
+        lines.append("Aim 2B: 周期分量剥离 1/f 背景前后的 ΔICC(A,1) Cluster-Bootstrap 检验 (1,000 Resamples)")
+        lines.append("-" * 88)
+        lines.append(df_dicc.to_string(index=False))
+        lines.append("")
+
     # 3. Aim 3
     aim3_file = TABLES_DIR / "aim3_pls_results.json"
     aim3_csv = TABLES_DIR / "aim3_pls_loadings.csv"
@@ -86,7 +94,7 @@ def main():
     if reg_file.exists():
         df_reg = pd.read_csv(reg_file)
         lines.append("=" * 88)
-        lines.append("Aim 4B: 嵌套交叉验证 (Nested-CV) 主观困倦变化 (ΔKSS) 连续预测")
+        lines.append("Aim 4B: 嵌套交叉验证 (Nested-CV) 易感性连续预测 (ΔZ_Sleepiness, ΔKSS, ΔPVT RT SD)")
         lines.append("=" * 88)
         lines.append(df_reg.to_string(index=False))
         lines.append("")
@@ -99,6 +107,16 @@ def main():
         lines.append("Aim 5: 脑电特征对睡眠剥夺反应的增量方差解释度 (ΔR² beyond Baseline & PSQI)")
         lines.append("=" * 88)
         lines.append(df_inc.to_string(index=False))
+        lines.append("")
+
+    # 6. Phase 9 Equivalence Test
+    eq_file = TABLES_DIR / "phase9_19ch_vs_61ch_equivalence_test.csv"
+    if eq_file.exists():
+        df_eq = pd.read_csv(eq_file)
+        lines.append("=" * 88)
+        lines.append("Phase 9: 19导双流常模架构 vs. 61导全阵列 Linear SVM 配对 Bootstrap 等效性检验")
+        lines.append("=" * 88)
+        lines.append(df_eq.to_string(index=False))
         lines.append("")
 
     report_text = "\n".join(lines)
