@@ -1,0 +1,3 @@
+periodic_feature,unadjusted_feature,n_subjects,icc_periodic,icc_unadjusted,delta_icc,ci95_lower,ci95_upper,p_boot_one_sided,p_boot_two_sided
+frontal_theta_periodic_power,frontal_theta_logpower,71,0.6247824995860796,0.43938744572000127,0.1853950538660783,0.028799529570736653,0.3958870216554095,0.008,0.016
+posterior_alpha_periodic_power,posterior_alpha_logpower,71,0.7024066822038032,0.6790550671998087,0.02335161500399452,-0.05987541634264767,0.1095418487459652,0.285,0.57

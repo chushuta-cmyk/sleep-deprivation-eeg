@@ -20,11 +20,11 @@ from scipy import stats
 
 warnings.filterwarnings('ignore')
 
-CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "analysis_config.yaml"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+CONFIG_PATH = PROJECT_ROOT / "config" / "analysis_config.yaml"
 with open(CONFIG_PATH, 'r') as f:
     config = yaml.safe_load(f)
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
 FEATURES_DIR = PROJECT_ROOT / config['paths']['features'] / 'v3_conservative'
 RESULTS_DIR = PROJECT_ROOT / config['paths']['results']
 (RESULTS_DIR / 'tables').mkdir(parents=True, exist_ok=True)
@@ -70,6 +70,65 @@ def compute_icc(session_df, feature_col):
         'spearman_p': float(p_spearman),
         'mean_ns': float(np.mean(ns_data)),
         'mean_sd': float(np.mean(sd_data)),
+    }
+
+
+def icc2_fast(Y):
+    """
+    Analytical two-way random-effects absolute agreement single-measure ICC(2,1) / ICC(A,1).
+    Mathematically identical to pingouin ICC2 on balanced (n_subjects, k_conditions) matrix Y.
+    """
+    n, k = Y.shape
+    grand_mean = np.mean(Y)
+    row_means = np.mean(Y, axis=1)
+    col_means = np.mean(Y, axis=0)
+    SSR = k * np.sum((row_means - grand_mean) ** 2)
+    SSC = n * np.sum((col_means - grand_mean) ** 2)
+    SST = np.sum((Y - grand_mean) ** 2)
+    SSE = SST - SSR - SSC
+    MSR = SSR / (n - 1)
+    MSC = SSC / (k - 1)
+    MSE = SSE / ((n - 1) * (k - 1))
+    return float((MSR - MSE) / (MSR + (k - 1) * MSE + k * (MSC - MSE) / n))
+
+
+def compute_delta_icc_bootstrap(session_df, feat_periodic, feat_raw, n_boot=1000, seed=42):
+    """
+    Cluster-bootstrap test (resampling subjects with replacement) for the difference in
+    cross-condition trait stability ΔICC(A,1) = ICC(periodic) - ICC(unadjusted).
+    """
+    piv_per = session_df.pivot(index='subject', columns='condition', values=feat_periodic).dropna()
+    piv_raw = session_df.pivot(index='subject', columns='condition', values=feat_raw).dropna()
+    common_subjs = piv_per.index.intersection(piv_raw.index)
+    Y_per = piv_per.loc[common_subjs, ['NS', 'SD']].values
+    Y_raw = piv_raw.loc[common_subjs, ['NS', 'SD']].values
+    n = len(common_subjs)
+
+    icc_per = icc2_fast(Y_per)
+    icc_raw = icc2_fast(Y_raw)
+    obs_delta = icc_per - icc_raw
+
+    rng = np.random.RandomState(seed)
+    boot_deltas = np.zeros(n_boot)
+    for b in range(n_boot):
+        idx = rng.choice(n, size=n, replace=True)
+        boot_deltas[b] = icc2_fast(Y_per[idx]) - icc2_fast(Y_raw[idx])
+
+    ci_low, ci_high = np.percentile(boot_deltas, [2.5, 97.5])
+    p_one_sided = float(np.mean(boot_deltas <= 0) if obs_delta > 0 else np.mean(boot_deltas >= 0))
+    p_two_sided = float(max(1.0 / n_boot, 2.0 * min(np.mean(boot_deltas <= 0), np.mean(boot_deltas >= 0))))
+
+    return {
+        'periodic_feature': feat_periodic,
+        'unadjusted_feature': feat_raw,
+        'n_subjects': int(n),
+        'icc_periodic': float(icc_per),
+        'icc_unadjusted': float(icc_raw),
+        'delta_icc': float(obs_delta),
+        'ci95_lower': float(ci_low),
+        'ci95_upper': float(ci_high),
+        'p_boot_one_sided': p_one_sided,
+        'p_boot_two_sided': p_two_sided,
     }
 
 
@@ -191,6 +250,29 @@ def main():
     icc_df.to_csv(results_file, index=False)
     print(f"\n✓ ICC 统计表已保存: {results_file}")
     print(icc_df[['feature', 'n_subjects', 'icc_agreement', 'icc_consistency', 'pearson_r', 'pearson_p']].to_string(index=False))
+
+    # Cluster-bootstrap test for ΔICC (periodic vs unadjusted log-power)
+    delta_icc_pairs = [
+        ('frontal_theta_periodic_power', 'frontal_theta_logpower'),
+        ('posterior_alpha_periodic_power', 'posterior_alpha_logpower'),
+    ]
+    delta_records = []
+    print("\n--- ΔICC(A,1) Cluster-Bootstrap 检验 (Periodic vs. Unadjusted, 1,000 resamples) ---")
+    for f_per, f_raw in delta_icc_pairs:
+        if f_per in session_df.columns and f_raw in session_df.columns:
+            d_res = compute_delta_icc_bootstrap(session_df, f_per, f_raw, n_boot=1000, seed=42)
+            delta_records.append(d_res)
+            print(
+                f"  - {f_per} vs. {f_raw} (N={d_res['n_subjects']}): "
+                f"ICC_per={d_res['icc_periodic']:.3f}, ICC_raw={d_res['icc_unadjusted']:.3f} -> "
+                f"ΔICC = {d_res['delta_icc']:+.3f} (95% CI [{d_res['ci95_lower']:+.3f}, {d_res['ci95_upper']:+.3f}], "
+                f"p_one_sided={d_res['p_boot_one_sided']:.4f}, p_two_sided={d_res['p_boot_two_sided']:.4f})"
+            )
+
+    delta_df = pd.DataFrame(delta_records)
+    delta_file = RESULTS_DIR / 'tables' / 'aim2_delta_icc_bootstrap.csv'
+    delta_df.to_csv(delta_file, index=False)
+    print(f"✓ ΔICC Bootstrap 统计表已保存: {delta_file}")
 
     plot_feats = [f for f in primary_features if f in session_df.columns]
     plot_cross_condition_stability(session_df, plot_feats, icc_df)

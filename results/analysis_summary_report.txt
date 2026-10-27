@@ -2,7 +2,7 @@
 睡眠剥夺对静息态 EEG 的影响：多维神经行为表型与机器学习基准报告 (Refined v3)
 Sleep Deprivation Effects on Resting-State EEG: Neurobehavioral Phenotype & ML Benchmark
 ========================================================================================
-报告生成时间: 2026-10-26 18:28:39
+报告生成时间: 2026-10-27 12:59:12
 
 ========================================================================================
 Phase 2: 数据质量控制 (QC) 与样本保留汇总
@@ -47,6 +47,12 @@ posterior_alpha_periodic_power          71       0.702407         0.707465   0.7
         global_hjorth_mobility          71       0.676745         0.685567   0.686130 4.013562e-11
       global_hjorth_complexity          71       0.444772         0.454969   0.454997 6.706523e-05
 
+Aim 2B: 周期分量剥离 1/f 背景前后的 ΔICC(A,1) Cluster-Bootstrap 检验 (1,000 Resamples)
+----------------------------------------------------------------------------------------
+              periodic_feature       unadjusted_feature  n_subjects  icc_periodic  icc_unadjusted  delta_icc  ci95_lower  ci95_upper  p_boot_one_sided  p_boot_two_sided
+  frontal_theta_periodic_power   frontal_theta_logpower          71      0.624782        0.439387   0.185395    0.028800    0.395887             0.008             0.016
+posterior_alpha_periodic_power posterior_alpha_logpower          71      0.702407        0.679055   0.023352   -0.059875    0.109542             0.285             0.570
+
 ========================================================================================
 Aim 3: 多维神经行为表型耦合 (PLS 偏最小二乘分析)
 ========================================================================================
@@ -79,15 +85,15 @@ Subcohort_PVT_Vigilance Behavioral                            SSS_change  0.3710
 ========================================================================================
 Aim 4A: 留一被试交叉验证 (LOSO) 脑状态分类基准 (NS vs SD)
 ========================================================================================
-                   model                        cv_scheme  auc_roc  subject_pair_auc_mean  accuracy  f1_score  sensitivity  specificity
-Logistic Regression (L2) LOSO (71 subjects, 142 sessions) 0.874231               0.830986  0.830986  0.830986     0.830986     0.830986
-              Linear SVM LOSO (71 subjects, 142 sessions) 0.880579               0.830986  0.830986  0.830986     0.830986     0.830986
-                 RBF SVM LOSO (71 subjects, 142 sessions) 0.863321               0.873239  0.866197  0.867133     0.873239     0.859155
-           Random Forest LOSO (71 subjects, 142 sessions) 0.876215               0.816901  0.809859  0.811189     0.816901     0.802817
-       Gradient Boosting LOSO (71 subjects, 142 sessions) 0.872843               0.816901  0.809859  0.811189     0.816901     0.802817
+                   model                        cv_scheme  auc_roc  auc_ci_lower  auc_ci_upper  subject_pair_auc_mean  accuracy  acc_ci_lower  acc_ci_upper  f1_score  sensitivity  specificity
+Logistic Regression (L2) LOSO (71 subjects, 142 sessions) 0.874231      0.778174      0.946459               0.830986  0.830986      0.732394      0.915493  0.830986     0.830986     0.830986
+              Linear SVM LOSO (71 subjects, 142 sessions) 0.880579      0.783560      0.951012               0.830986  0.830986      0.732394      0.915493  0.830986     0.830986     0.830986
+                 RBF SVM LOSO (71 subjects, 142 sessions) 0.863321      0.760152      0.945452               0.873239  0.866197      0.781690      0.929577  0.867133     0.873239     0.859155
+           Random Forest LOSO (71 subjects, 142 sessions) 0.876215      0.793890      0.948026               0.816901  0.809859      0.725176      0.887324  0.811189     0.816901     0.802817
+       Gradient Boosting LOSO (71 subjects, 142 sessions) 0.872843      0.777172      0.951215               0.816901  0.809859      0.718310      0.894366  0.811189     0.816901     0.802817
 
 ========================================================================================
-Aim 4B: 嵌套交叉验证 (Nested-CV) 主观困倦变化 (ΔKSS) 连续预测
+Aim 4B: 嵌套交叉验证 (Nested-CV) 易感性连续预测 (ΔZ_Sleepiness, ΔKSS, ΔPVT RT SD)
 ========================================================================================
        model                                    target  n_subjects     cv_r2    cv_mae  pearson_r    pearson_p
        Ridge                         KSS_change (ΔKSS)          33  0.327348  1.262798   0.582113 3.797716e-04
@@ -163,3 +169,9 @@ PANAS_N_change_clean       global_spectral_exponent_change         33          0
 PANAS_N_change_clean posterior_alpha_periodic_power_change         33          0.340488     0.341372 8.849301e-04  0.038964  0.844896
 PANAS_N_change_clean   frontal_theta_periodic_power_change         33          0.340488     0.383107 4.261941e-02  2.003529  0.167584
 PANAS_N_change_clean       global_hjorth_complexity_change         33          0.340488     0.342206 1.718879e-03  0.075780  0.785052
+
+========================================================================================
+Phase 9: 19导双流常模架构 vs. 61导全阵列 Linear SVM 配对 Bootstrap 等效性检验
+========================================================================================
+                                     model_19ch                    model_61ch  n_subjects  n_sessions  auc_19ch  auc_61ch  auc_61ch_ci_lower  auc_61ch_ci_upper  delta_auc  delta_ci_lower  delta_ci_upper  p_paired_bootstrap
+19-ch Dual-Stream (CAR+CSD) + Normative Z + MST 61-ch Full Montage Linear SVM          71         142  0.875223  0.880579            0.78356           0.951012  -0.005356       -0.042055        0.025992               0.782
