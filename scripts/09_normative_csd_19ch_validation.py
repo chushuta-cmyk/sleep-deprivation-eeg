@@ -329,6 +329,7 @@ def run_paired_bootstrap_equivalence_test(df_19, full_df, y_prob_19, n_boot=1000
     rng = np.random.RandomState(seed)
     unique_subjs = np.unique(groups)
     boot_diffs = []
+    boot_aucs_19 = []
     boot_aucs_61 = []
     for _ in range(n_boot):
         b_subjs = rng.choice(unique_subjs, size=len(unique_subjs), replace=True)
@@ -337,10 +338,12 @@ def run_paired_bootstrap_equivalence_test(df_19, full_df, y_prob_19, n_boot=1000
             a19 = roc_auc_score(y[b_idx], y_prob_19[b_idx])
             a61 = roc_auc_score(y[b_idx], y_prob_61[b_idx])
             boot_diffs.append(a19 - a61)
+            boot_aucs_19.append(a19)
             boot_aucs_61.append(a61)
 
     boot_diffs = np.array(boot_diffs)
     diff_ci = np.percentile(boot_diffs, [2.5, 97.5])
+    auc_19_ci = np.percentile(boot_aucs_19, [2.5, 97.5])
     auc_61_ci = np.percentile(boot_aucs_61, [2.5, 97.5])
     p_two_sided = float(2.0 * min(np.mean(boot_diffs <= 0), np.mean(boot_diffs >= 0)))
 
@@ -350,6 +353,8 @@ def run_paired_bootstrap_equivalence_test(df_19, full_df, y_prob_19, n_boot=1000
         'n_subjects': int(len(unique_subjs)),
         'n_sessions': int(len(y)),
         'auc_19ch': auc_19,
+        'auc_19ch_ci_lower': float(auc_19_ci[0]),
+        'auc_19ch_ci_upper': float(auc_19_ci[1]),
         'auc_61ch': auc_61,
         'auc_61ch_ci_lower': float(auc_61_ci[0]),
         'auc_61ch_ci_upper': float(auc_61_ci[1]),
