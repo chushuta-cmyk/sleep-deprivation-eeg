@@ -1,2 +1,2 @@
-model_19ch,model_61ch,n_subjects,n_sessions,auc_19ch,auc_61ch,auc_61ch_ci_lower,auc_61ch_ci_upper,delta_auc,delta_ci_lower,delta_ci_upper,p_paired_bootstrap
-19-ch Dual-Stream (CAR+CSD) + Normative Z + MST,61-ch Full Montage Linear SVM,71,142,0.8752231700059512,0.8805792501487799,0.7835598095615948,0.9510117040269787,-0.005356080142828734,-0.04205514778813724,0.025991866693116393,0.782
+model_19ch,model_61ch,n_subjects,n_sessions,auc_19ch,auc_19ch_ci_lower,auc_19ch_ci_upper,auc_61ch,auc_61ch_ci_lower,auc_61ch_ci_upper,delta_auc,delta_ci_lower,delta_ci_upper,p_paired_bootstrap
+19-ch Dual-Stream (CAR+CSD) + Normative Z + MST,61-ch Full Montage Linear SVM,71,142,0.8752231700059512,0.779245,0.945118,0.8805792501487799,0.7835598095615948,0.9510117040269788,-0.0053560801428287,-0.0420551477881372,0.0259918666931163,0.782
