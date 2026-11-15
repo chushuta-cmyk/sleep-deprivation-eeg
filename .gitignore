@@ -26,6 +26,6 @@ env/
 ~$*
 *.swp
 
-# Manuscript drafts (local only)
+# Local-only working files (not distributed)
 manuscript/
 *.docx
